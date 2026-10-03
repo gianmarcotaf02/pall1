@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PollDeadline, PollStatus } from "@/components/polls/poll-status";
+import { weekRangeShort } from "@/lib/week";
 import type { PollSummary } from "@/types/domain";
 
 export function PollCard({ poll }: { poll: PollSummary }) {
@@ -16,6 +17,11 @@ export function PollCard({ poll }: { poll: PollSummary }) {
           {poll.creatorNickname} · {poll.optionCount} opzioni ·{" "}
           <span className="num">{poll.voterCount}</span> votanti
         </p>
+        {poll.weekStart ? (
+          <p className="mt-0.5 truncate text-[12px] text-accent-text">
+            Settimana {weekRangeShort(poll.weekStart)}
+          </p>
+        ) : null}
         {poll.details ? (
           <p className="mt-1 line-clamp-1 text-[12.5px] text-muted">{poll.details}</p>
         ) : null}

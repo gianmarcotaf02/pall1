@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { CreatePollForm } from "@/components/polls/create-poll-form";
 import { requireProfile } from "@/lib/auth";
 import { getPollDetail } from "@/lib/queries";
+import { startOfWeek } from "@/lib/week";
 import { IconArrowLeft } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Nuovo sondaggio" };
@@ -21,6 +22,9 @@ export default async function NewPollPage({
   const prefillQuestion = source
     ? `Orario per: ${source.question}`.slice(0, 160)
     : undefined;
+
+  // Se nasce da un altro sondaggio, eredita la sua settimana.
+  const defaultWeekStart = source ? source.weekStart : startOfWeek();
 
   return (
     <>
@@ -40,7 +44,11 @@ export default async function NewPollPage({
       />
 
       <section className="rounded-card border border-rule bg-surface p-4 md:p-6">
-        <CreatePollForm prefillQuestion={prefillQuestion} prefillSingleChoice={Boolean(source)} />
+        <CreatePollForm
+          prefillQuestion={prefillQuestion}
+          prefillSingleChoice={Boolean(source)}
+          defaultWeekStart={defaultWeekStart}
+        />
       </section>
     </>
   );

@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { requireProfile } from "@/lib/auth";
 import { formatMatchDate } from "@/lib/format";
 import { getPollDetail } from "@/lib/queries";
+import { weekRangeLabel } from "@/lib/week";
 import { IconArrowLeft, IconClock, IconLock } from "@/components/icons";
 
 export async function generateMetadata({
@@ -49,6 +50,7 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
               {poll.creatorNickname}
             </span>
             <span>{formatMatchDate(poll.createdAt)}</span>
+            {poll.weekStart ? <span>{weekRangeLabel(poll.weekStart)}</span> : null}
             {poll.closesAt ? (
               <span className="inline-flex items-center gap-1.5">
                 <IconClock className="size-4" />

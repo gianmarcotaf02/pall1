@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { POSITION_CODES } from "@/lib/positions";
+import { isWeekStart } from "@/lib/week";
 
 export const FORMATS = ["five_a_side", "eight_a_side", "eleven_a_side"] as const;
 export const formatEnum = z.enum(FORMATS);
@@ -128,6 +129,13 @@ export const pollSchema = z.object({
     .max(160, "La domanda può avere al massimo 160 caratteri."),
   details: z.string().trim().max(500, "Massimo 500 caratteri.").optional(),
   closes_at: z.string().optional(),
+  week_start: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || isWeekStart(value),
+      "La settimana deve iniziare di lunedì.",
+    ),
   options: z
     .array(
       z.object({

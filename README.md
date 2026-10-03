@@ -20,6 +20,9 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 - **Sondaggi** (stile WhatsApp): domanda + opzioni, a scelta singola o multipla, con **chi ha
   votato cosa visibile a tutti**; chiudi, riapri o elimina i tuoi. Le opzioni possono portare una
   data e ora, così l'admin crea la partita con un click.
+- **Settimane reali**: un sondaggio può riferirsi a una settimana (lunedì → domenica). Scegliendola,
+  le opzioni diventano i suoi sette giorni con la data vera; i sondaggi aperti si raggruppano per
+  settimana, dalla più vicina a oggi.
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
@@ -169,6 +172,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_storage_avatars` | bucket `avatars` + policy |
 | `…_polls` | `polls`, `poll_options`, `poll_votes` + trigger + RLS |
 | `…_poll_options_sort_order` | rinomina `position` → `sort_order` (parola riservata SQL + attrito PostgREST) |
+| `…_poll_week` | `polls.week_start` (lunedì, opzionale) + vincolo e indice |
 | `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
 
 ```bash
@@ -194,6 +198,8 @@ npm run gen:types         # rigenera i tipi TypeScript
 - Un sondaggio a scelta singola sostituisce automaticamente il voto precedente (trigger).
 - **Posizioni:** il catalogo `positions` è di sola lettura dall'app; ognuno scrive solo le proprie
   `profile_positions`, tutti le vedono.
+- **Settimana:** `week_start` accetta solo lunedì (vincolo) e non si modifica dopo la creazione
+  (trigger), come domanda e tipo di voto.
 
 ---
 
@@ -220,6 +226,7 @@ src/
 │  ├─ supabase/        client server-side + refresh in proxy
 │  ├─ queries.ts       letture tipizzate
 │  ├─ positions.ts     catalogo posizioni + coordinate (rispecchia la tabella `positions`)
+│  ├─ week.ts          settimane lunedì→domenica, fuso di Roma, etichette
 │  ├─ validation/      schemi Zod
 │  └─ errors.ts        traduzione errori Postgres/trigger in italiano
 ├─ proxy.ts            refresh sessione + guardia rotte (ex middleware)
@@ -290,10 +297,11 @@ richiederebbero il login a Vercel anche per gli amici.
 
 - **Unitari** (`npm test`): schemi Zod, traduzione errori, conversioni di fuso orario e
   **coerenza del catalogo posizioni** con la migrazione SQL (codici, etichette, coordinate,
-  e nessun pallino sovrapposto sul campo).
+  e nessun pallino sovrapposto sul campo) e **settimane reali** (lunedì, fuso di Roma,
+  ora legale, etichette).
 - **RLS** (`npm run test:rls`): crea utenti di prova con la service role key e verifica
-  con la anon key che letture e scritture siano davvero limitate (30 controlli: partite,
-  iscrizioni, sondaggi, posizioni). Pulizia automatica.
+  con la anon key che letture e scritture siano davvero limitate (32 controlli: partite,
+  iscrizioni, sondaggi, posizioni, settimane). Pulizia automatica.
 - **E2E** (`npm run test:e2e`): flussi di accesso su viewport mobile e desktop.
 
 I test RLS sono la rete di sicurezza più importante: se una policy si allenta, se ne

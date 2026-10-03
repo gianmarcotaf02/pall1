@@ -237,7 +237,12 @@ try {
   console.log("\nSondaggi");
   const pollInsert = await playerClient
     .from("polls")
-    .insert({ question: `Sondaggio RLS ${stamp}`, allow_multiple: true, created_by: player.id })
+    .insert({
+      question: `Sondaggio RLS ${stamp}`,
+      allow_multiple: true,
+      created_by: player.id,
+      week_start: "2026-10-05", // lunedì
+    })
     .select("id")
     .single();
   check("un membro crea un sondaggio", Boolean(pollInsert.data?.id), pollInsert.error?.message);
@@ -271,6 +276,28 @@ try {
     .select("id")
     .single();
   check("si vota per sé", Boolean(ownVote.data?.id), ownVote.error?.message);
+
+  const weekHijack = await playerClient
+    .from("polls")
+    .update({ week_start: "2030-01-07" })
+    .eq("id", pollId)
+    .select("week_start")
+    .single();
+  check(
+    "la settimana non si modifica dopo la creazione",
+    weekHijack.data?.week_start === "2026-10-05",
+    weekHijack.data?.week_start,
+  );
+
+  const badWeek = await playerClient
+    .from("polls")
+    .insert({ question: `Settimana sbagliata ${stamp}`, created_by: player.id, week_start: "2026-10-07" })
+    .select("id");
+  check(
+    "la settimana deve iniziare di lunedì",
+    (badWeek.data ?? []).length === 0,
+    badWeek.error?.message,
+  );
 
   const votes = await playerClient.from("poll_votes").select("profile_id, option_id");
   check("tutti vedono chi ha votato cosa", (votes.data ?? []).length >= 1);

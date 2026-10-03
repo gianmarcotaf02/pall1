@@ -5,8 +5,19 @@ import { createPollAction } from "@/lib/actions/polls";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FormMessage } from "@/components/ui/form-message";
-import { IconPlus, IconTrash, IconX } from "@/components/icons";
-import { MAX_POLL_OPTIONS, MIN_POLL_OPTIONS } from "@/lib/validation/schemas";
+import { IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
+import {
+  MAX_POLL_OPTIONS,
+  MIN_POLL_OPTIONS,
+} from "@/lib/validation/schemas";
+import {
+  addDays,
+  relativeWeekLabel,
+  startOfWeek,
+  weekDays,
+  weekRangeLabel,
+  weekdayName,
+} from "@/lib/week";
 
 type Row = {
   key: number;
@@ -21,21 +32,48 @@ function emptyRow(): Row {
   return { key: nextKey++, label: "", startsAt: "", withDate: false };
 }
 
+/** Ora di ritrovo predefinita per le opzioni generate dalla settimana. */
+const DEFAULT_TIME = "21:00";
+
+function rowsForWeek(weekStart: string): Row[] {
+  return weekDays(weekStart).map((day) => ({
+    key: nextKey++,
+    label: weekdayName(day),
+    startsAt: `${day}T${DEFAULT_TIME}`,
+    withDate: true,
+  }));
+}
+
 const PRESETS = [
-  { label: "Giorni", values: ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"] },
-  { label: "Orari", values: ["18:00", "19:00", "20:00", "21:00", "22:00"] },
+  {
+    label: "Orari",
+    values: ["18:00", "19:00", "20:00", "21:00", "22:00"],
+  },
 ];
 
 export function CreatePollForm({
   prefillQuestion,
   prefillSingleChoice,
+  defaultWeekStart,
 }: {
   prefillQuestion?: string;
   prefillSingleChoice?: boolean;
+  defaultWeekStart: string | null;
 }) {
   const [state, action] = useActionState(createPollAction, null);
-  const [rows, setRows] = useState<Row[]>([emptyRow(), emptyRow()]);
+  const [rows, setRows] = useState<Row[]>(() =>
+    defaultWeekStart ? rowsForWeek(defaultWeekStart) : [emptyRow(), emptyRow()],
+  );
   const [allowMultiple, setAllowMultiple] = useState(!prefillSingleChoice);
+  const [weekStart, setWeekStart] = useState<string | null>(defaultWeekStart);
+
+  const currentWeek = startOfWeek();
+
+  function chooseWeek(week: string | null) {
+    setWeekStart(week);
+    // Le opzioni seguono la settimana: sono i suoi sette giorni.
+    setRows(week ? rowsForWeek(week) : [emptyRow(), emptyRow()]);
+  }
 
   function update(key: number, patch: Partial<Row>) {
     setRows((previous) => previous.map((row) => (row.key === key ? { ...row, ...patch } : row)));
@@ -46,12 +84,24 @@ export function CreatePollForm({
   }
 
   function removeRow(key: number) {
-    setRows((previous) => (previous.length <= MIN_POLL_OPTIONS ? previous : previous.filter((row) => row.key !== key)));
+    setRows((previous) =>
+      previous.length <= MIN_POLL_OPTIONS ? previous : previous.filter((row) => row.key !== key),
+    );
   }
 
   function applyPreset(values: string[]) {
-    setRows(values.slice(0, MAX_POLL_OPTIONS).map((label) => ({ key: nextKey++, label, startsAt: "", withDate: false })));
+    setRows(
+      values.slice(0, MAX_POLL_OPTIONS).map((label) => ({
+        key: nextKey++,
+        label,
+        startsAt: "",
+        withDate: false,
+      })),
+    );
   }
+
+  const stepButton =
+    "inline-flex size-10 items-center justify-center rounded-control border border-rule text-muted transition-colors duration-150 hover:border-line-strong hover:text-ink";
 
   return (
     <form action={action} className="space-y-5">
@@ -70,6 +120,78 @@ export function CreatePollForm({
       <Field label="Dettagli" htmlFor="details" hint="Opzionale: contesto, scadenza, note.">
         <Textarea id="details" name="details" maxLength={500} placeholder="Es. decidiamo entro giovedì" />
       </Field>
+
+      {/* ---------------------------------------------------------- settimana */}
+      <fieldset className="rounded-card border border-rule bg-paper p-4">
+        <legend className="text-[13px] font-medium text-muted">Settimana</legend>
+
+        <input type="hidden" name="week_start" value={weekStart ?? ""} />
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[15px] font-medium text-ink">
+              {weekStart ? weekRangeLabel(weekStart) : "Nessuna settimana"}
+            </p>
+            <p className="text-[12px] text-muted">
+              {weekStart ? relativeWeekLabel(weekStart) : "Sondaggio senza una settimana di riferimento"}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={stepButton}
+              onClick={() => chooseWeek(addDays(weekStart ?? currentWeek, -7))}
+              aria-label="Settimana precedente"
+            >
+              <IconChevronRight className="size-4 rotate-180" />
+            </button>
+            <button
+              type="button"
+              className="h-10 rounded-control border border-rule px-3 text-[13px] text-muted transition-colors duration-150 hover:border-line-strong hover:text-ink"
+              onClick={() => chooseWeek(currentWeek)}
+            >
+              Questa settimana
+            </button>
+            <button
+              type="button"
+              className={stepButton}
+              onClick={() => chooseWeek(addDays(weekStart ?? currentWeek, 7))}
+              aria-label="Settimana successiva"
+            >
+              <IconChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-rule pt-3">
+          <button
+            type="button"
+            onClick={() => chooseWeek(addDays(currentWeek, 7))}
+            className="rounded-full border border-rule px-2.5 py-1 text-[11.5px] text-muted transition-colors duration-150 hover:border-line-strong hover:text-ink"
+          >
+            La prossima
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseWeek(addDays(currentWeek, 14))}
+            className="rounded-full border border-rule px-2.5 py-1 text-[11.5px] text-muted transition-colors duration-150 hover:border-line-strong hover:text-ink"
+          >
+            Tra due settimane
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseWeek(null)}
+            className="rounded-full border border-rule px-2.5 py-1 text-[11.5px] text-muted transition-colors duration-150 hover:border-line-strong hover:text-ink"
+          >
+            Nessuna settimana
+          </button>
+
+          <p className="text-[11.5px] text-muted">
+            Cambiando settimana le opzioni diventano i suoi sette giorni, alle {DEFAULT_TIME}.
+          </p>
+        </div>
+      </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <fieldset className="space-y-2">
@@ -103,15 +225,20 @@ export function CreatePollForm({
           </div>
 
           <p className="text-xs text-muted">
-            «Una sola scelta» va bene per un orario; «più scelte» per i giorni disponibili.
+            «Più scelte» per i giorni disponibili, «una sola» per l&apos;orario.
           </p>
         </fieldset>
 
-        <Field label="Chiusura automatica" htmlFor="closes_at" hint="Opzionale: oltre questa data non si vota più.">
+        <Field
+          label="Chiusura automatica"
+          htmlFor="closes_at"
+          hint="Opzionale: oltre questa data non si vota più."
+        >
           <Input id="closes_at" name="closes_at" type="datetime-local" />
         </Field>
       </div>
 
+      {/* ------------------------------------------------------------ opzioni */}
       <fieldset className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <legend className="text-[13px] font-medium text-muted">
@@ -137,9 +264,7 @@ export function CreatePollForm({
           {rows.map((row, index) => (
             <li key={row.key} className="rounded-control border border-rule bg-paper p-2.5">
               <div className="flex items-center gap-2">
-                <span className="num w-5 shrink-0 text-center text-[12px] text-muted">
-                  {index + 1}
-                </span>
+                <span className="num w-5 shrink-0 text-center text-[12px] text-muted">{index + 1}</span>
 
                 <input
                   name="option_label"

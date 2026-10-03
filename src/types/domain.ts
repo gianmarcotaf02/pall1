@@ -79,6 +79,8 @@ export type PollSummary = {
   isClosed: boolean;
   /** Chiuso a mano oppure oltre la scadenza. */
   closed: boolean;
+  /** Lunedì della settimana di riferimento, se il sondaggio ne ha una. */
+  weekStart: string | null;
   createdAt: string;
   createdBy: string;
   creatorNickname: string;

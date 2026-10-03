@@ -315,6 +315,7 @@ export type Database = {
           is_closed: boolean
           question: string
           updated_at: string
+          week_start: string | null
         }
         Insert: {
           allow_multiple?: boolean
@@ -326,6 +327,7 @@ export type Database = {
           is_closed?: boolean
           question: string
           updated_at?: string
+          week_start?: string | null
         }
         Update: {
           allow_multiple?: boolean
@@ -337,6 +339,7 @@ export type Database = {
           is_closed?: boolean
           question?: string
           updated_at?: string
+          week_start?: string | null
         }
         Relationships: [
           {

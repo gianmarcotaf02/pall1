@@ -282,6 +282,7 @@ function toPollSummary(
     closesAt: poll.closes_at,
     isClosed: poll.is_closed,
     closed: isPollClosed(poll),
+    weekStart: poll.week_start,
     createdAt: poll.created_at,
     createdBy: poll.created_by,
     creatorNickname: creator?.nickname ?? "—",

@@ -34,6 +34,7 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
     question: formData.get("question"),
     details: formData.get("details") ?? "",
     closes_at: String(formData.get("closes_at") ?? ""),
+    week_start: String(formData.get("week_start") ?? ""),
     options,
   });
   if (!parsed.success) return { error: firstIssue(parsed.error) };
@@ -55,6 +56,7 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
       details: parsed.data.details?.trim() ? parsed.data.details.trim() : null,
       allow_multiple: formData.get("allow_multiple") === "on",
       closes_at: closesAt,
+      week_start: parsed.data.week_start ? parsed.data.week_start : null,
       created_by: profile.id,
     })
     .select("id")
