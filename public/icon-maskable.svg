@@ -4,8 +4,7 @@
       <rect width="512" height="512" fill="#000"/>
       <g fill="#fff">
         <path d="M215 84h136v295H215z"/>
-        <path d="M137 386h37v43h-37zM186 384h166v45H186zM364 386h37v43h-37z"/>
-        <path d="M215 84C184 98 160 130 148 166l0 28c8 34 36 52 67 58z"/>
+        <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
         <circle cx="137" cy="176" r="40"/>
       </g>
       <circle cx="130" cy="202" r="32" fill="#000"/>
@@ -14,7 +13,7 @@
 
   <!-- versione maskable: fondo pieno, marchio entro la zona sicura (80%) -->
   <rect width="512" height="512" fill="#09782b"/>
-  <g transform="translate(64 64) scale(0.75)">
+  <g transform="translate(38 58) scale(0.78)">
     <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark-compact)"/>
   </g>
 </svg>

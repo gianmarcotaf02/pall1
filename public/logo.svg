@@ -13,7 +13,7 @@
         <!-- base: area di porta vista dall'alto -->
         <path d="M137 386h37v43h-37zM186 384h166v45H186zM364 386h37v43h-37z"/>
         <!-- bandierina, termina a punta sotto la tacca -->
-        <path d="M215 84C184 98 160 130 148 166l0 28c8 34 36 52 67 58z"/>
+        <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
         <circle cx="137" cy="176" r="40"/>
       </g>
       <g fill="#000">
