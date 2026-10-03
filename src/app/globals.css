@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------
+   Pall1 design tokens
+   Sistema: Operate (utility) · accento unico arancio-segnale 45°
+   Neutri tintati verso l'accento. Mai #000, mai #fff.
+   --------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --paper: oklch(96.5% 0.006 80);
+  --surface: oklch(98.8% 0.004 80);
+  --surface-2: oklch(93.5% 0.008 80);
+  --rule: oklch(88.5% 0.008 80);
+  --line-strong: oklch(78% 0.01 80);
+
+  --ink: oklch(22% 0.012 70);
+  --muted: oklch(45% 0.012 75);
+
+  --accent: oklch(62% 0.17 45);
+  --accent-text: oklch(47% 0.15 42);
+  --accent-solid: oklch(45% 0.15 42);
+  --accent-solid-strong: oklch(39% 0.14 42);
+  --accent-on: oklch(98.5% 0.01 80);
+
+  --win: oklch(46% 0.12 152);
+  --loss: oklch(50% 0.19 25);
+  --draw: oklch(50% 0.09 75);
+
+  --focus: oklch(50% 0.18 45);
+
+  --shadow-card: 0 1px 1px oklch(25% 0.02 70 / 0.05), 0 10px 30px -20px oklch(25% 0.02 70 / 0.28);
+  --shadow-pop: 0 1px 1px oklch(25% 0.02 70 / 0.06), 0 18px 44px -22px oklch(25% 0.02 70 / 0.4);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --paper: oklch(15.5% 0.008 75);
+  --surface: oklch(19% 0.009 75);
+  --surface-2: oklch(23.5% 0.01 75);
+  --rule: oklch(28% 0.008 75);
+  --line-strong: oklch(38% 0.01 75);
+
+  --ink: oklch(94% 0.006 85);
+  --muted: oklch(72% 0.01 78);
+
+  --accent: oklch(72% 0.15 48);
+  --accent-text: oklch(78% 0.13 50);
+  --accent-solid: oklch(74% 0.15 48);
+  --accent-solid-strong: oklch(80% 0.14 50);
+  --accent-on: oklch(18% 0.02 50);
+
+  --win: oklch(72% 0.13 152);
+  --loss: oklch(70% 0.16 25);
+  --draw: oklch(75% 0.09 80);
+
+  --focus: oklch(74% 0.16 48);
+
+  --shadow-card: 0 1px 1px oklch(0% 0 0 / 0.3), 0 10px 30px -20px oklch(0% 0 0 / 0.6);
+  --shadow-pop: 0 1px 1px oklch(0% 0 0 / 0.35), 0 18px 44px -22px oklch(0% 0 0 / 0.7);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-rule: var(--rule);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-strong: var(--accent-solid-strong);
+  --color-accent-on: var(--accent-on);
+
+  --color-win: var(--win);
+  --color-loss: var(--loss);
+  --color-draw: var(--draw);
+  --color-focus: var(--focus);
+
+  --font-sans:
+    "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display:
+    "Archivo Variable", "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-control: 10px;
+  --radius-card: 14px;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-rule);
+  }
+
+  html {
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overflow-x: clip;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-style: normal; /* mai corsivo nei titoli */
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  /* I numeri (punteggi, statistiche) non devono "ballare" */
+  .num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--color-accent) 26%, transparent);
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
