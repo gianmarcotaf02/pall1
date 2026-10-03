@@ -201,9 +201,16 @@ Token definiti in `src/app/globals.css` (Tailwind v4, `@theme inline`):
 
 ## 6. Deploy
 
+**Produzione:** <https://pall1.vercel.app>
+
 1. Push su `main` → deploy automatico su Vercel.
 2. Ogni PR → preview deploy (usa le stesse variabili `NEXT_PUBLIC_*`).
 3. Prima del merge: `npm run lint && npm run typecheck && npm test && npm run build`.
+
+`vercel.json` fissa il framework su `nextjs`: il progetto era stato creato dalla CLI come
+framework *Other* (output `public/`), e questo faceva rispondere 404 a tutte le rotte.
+La protezione SSO dei deployment è disattivata, altrimenti gli URL `.vercel.app`
+richiederebbero il login a Vercel anche per gli amici.
 
 ---
 
