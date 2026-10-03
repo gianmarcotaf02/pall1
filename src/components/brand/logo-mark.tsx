@@ -6,24 +6,30 @@
  * una tacca circolare.
  *
  * Variante `compact` (sotto i ~40px, es. barra in alto e icona app): solo il
- * numero con la bandierina. Pallone e marcature sono spessi 1-2px a quelle
+ * numero con la bandierina: pallone e marcature sono spessi 1-2px a quelle
  * dimensioni, e la base a tre pezzi diventa una riga sporca.
  *
- * Le marcature del campo sono **sottrazioni** (mask), non bianco: così il
- * marchio funziona su qualunque fondo. La bandierina si sovrappone alla gamba
- * di proposito: se le due forme si limitano a toccarsi, l'antialiasing lascia
- * una fessura di 1px che sembra un errore.
+ * COME È COSTRUITO — e perché non ci sono mask.
+ * Le marcature del campo sono disegnate con il colore del fondo (non ritagliate
+ * con una `<mask>`): una mask richiede che il browser la risolva, e Safari non
+ * la applica in modo affidabile quando è dentro un gruppo trasformato o quando
+ * l'SVG è usato come favicon. Risultato, in quei casi: un quadrato tutto del
+ * colore del marchio. Con le forme piene questo non può succedere.
  *
- * Stessa geometria di `public/logo.svg` e `public/icon.svg`: se cambi l'uno,
- * aggiorna gli altri. Coordinate su griglia 512x512.
+ * Le forme dello stesso colore si **sovrappongono** (la bandierina entra nella
+ * gamba): due forme che si limitano a toccarsi lasciano una fessura di 1px per
+ * antialiasing.
+ *
+ * Coordinate su griglia 512x512. Stessa geometria di `public/logo.svg`,
+ * `public/icon.svg` e `public/icon-maskable.svg`: se cambi uno, aggiorna gli altri.
  */
 
-/** Bandierina: entra dentro la gamba (x 215) per evitare la cucitura. */
-const FLAG = "M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z";
 const STEM = "M215 84h136v295H215z";
-const BASE = "M137 386h37v43h-37zM186 384h166v45H186zM364 386h37v43h-37z";
+const FLAG = "M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z";
 const FLAG_TIP = { cx: 137, cy: 176, r: 40 };
 const NOTCH = { cx: 130, cy: 202, r: 32 };
+
+const BASE = ["M137 386h37v43h-37z", "M186 384h166v45H186z", "M364 386h37v43h-37z"];
 
 const PENTAGONS = [
   { x: 258.9, y: 113.6, rotate: 145 },
@@ -32,49 +38,14 @@ const PENTAGONS = [
   { x: 325, y: 148, rotate: 270 },
   { x: 283, y: 190, rotate: 0 },
 ];
-
 const PENTAGON_PATH = "M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z";
 
-function CompactMask() {
-  return (
-    <mask id="pall1-mark-compact" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-      <rect width="512" height="512" fill="#000" />
-      <g fill="#fff">
-        <path d={STEM} />
-        <path d={FLAG} />
-        <circle cx={FLAG_TIP.cx} cy={FLAG_TIP.cy} r={FLAG_TIP.r} />
-      </g>
-      <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} fill="#000" />
-    </mask>
-  );
-}
-
-function FullMask() {
-  return (
-    <mask id="pall1-mark" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-      <rect width="512" height="512" fill="#000" />
-      <g fill="#fff">
-        <path d={STEM} />
-        <path d={BASE} />
-        <path d={FLAG} />
-        <circle cx={FLAG_TIP.cx} cy={FLAG_TIP.cy} r={FLAG_TIP.r} />
-      </g>
-      <g fill="#000">
-        <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} />
-        {PENTAGONS.map((panel) => (
-          <g key={`${panel.x}-${panel.y}`} transform={`translate(${panel.x} ${panel.y}) rotate(${panel.rotate})`}>
-            <path d={PENTAGON_PATH} />
-          </g>
-        ))}
-      </g>
-      <g fill="none" stroke="#000" strokeWidth="8">
-        <path d="M215 314h136" />
-        <circle cx="283" cy="314" r="50" />
-        <path d="M235 379a37 37 0 0 1 74 0" />
-      </g>
-    </mask>
-  );
-}
+/**
+ * Colori fissi del tassello dell'icona: il marchio non cambia con il tema,
+ * così la tessera in app è identica a favicon e icona PWA.
+ */
+const TILE = "#09782b";
+const TILE_MARK = "#f5fcf6";
 
 export function LogoMark({
   className,
@@ -95,18 +66,54 @@ export function LogoMark({
       focusable={false}
       className={className}
     >
-      <defs>{compact ? <CompactMask /> : <FullMask />}</defs>
-
       {compact ? (
         <>
-          <rect width="512" height="512" rx="115" fill="currentColor" />
+          {/* tassello */}
+          <rect width="512" height="512" rx="115" fill={TILE} />
           {/* senza la base il numero è più corto: lo ricentro in verticale */}
           <g transform="translate(0 26)">
-            <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark-compact)" />
+            <g fill={TILE_MARK}>
+              <path d={STEM} />
+              <path d={FLAG} />
+              <circle cx={FLAG_TIP.cx} cy={FLAG_TIP.cy} r={FLAG_TIP.r} />
+            </g>
+            {/* tacca: cerchio del colore del tassello */}
+            <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} fill={TILE} />
           </g>
         </>
       ) : (
-        <rect width="512" height="512" fill="currentColor" mask="url(#pall1-mark)" />
+        <>
+          <g fill="currentColor">
+            <path d={STEM} />
+            {BASE.map((d) => (
+              <path key={d} d={d} />
+            ))}
+            <path d={FLAG} />
+            <circle cx={FLAG_TIP.cx} cy={FLAG_TIP.cy} r={FLAG_TIP.r} />
+          </g>
+
+          {/* marcature del campo: stesso colore del fondo su cui poggia il marchio */}
+          <g style={{ fill: "var(--paper)" }}>
+            <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} />
+            {PENTAGONS.map((panel) => (
+              <g
+                key={`${panel.x}-${panel.y}`}
+                transform={`translate(${panel.x} ${panel.y}) rotate(${panel.rotate})`}
+              >
+                <path d={PENTAGON_PATH} />
+              </g>
+            ))}
+            {/* linea di metà campo */}
+            <rect x="215" y="310" width="136" height="8" />
+            {/* cerchio di centrocampo (anello) */}
+            <path
+              fillRule="evenodd"
+              d="M229 314a54 54 0 1 0 108 0a54 54 0 1 0-108 0M237 314a46 46 0 1 0 92 0a46 46 0 1 0-92 0"
+            />
+            {/* arco di rigore */}
+            <path d="M242 379A41 41 0 0 1 324 379A33 33 0 0 0 242 379Z" />
+          </g>
+        </>
       )}
     </svg>
   );

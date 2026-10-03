@@ -27,7 +27,7 @@ export function AppShell({
       {/* Rail desktop */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-rule px-3 py-5 md:flex">
         <div className="flex items-center gap-2.5 px-3 pb-6">
-          <LogoMark compact className="size-8 text-accent-solid" title="" />
+          <LogoMark compact className="size-8" title="" />
           <Wordmark />
         </div>
 
@@ -66,7 +66,7 @@ export function AppShell({
         {/* Barra mobile */}
         <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule bg-paper px-4 md:hidden">
           <Link href="/" className="flex items-center gap-2.5" aria-label="Pall1 — home">
-            <LogoMark compact className="size-8 text-accent-solid" title="" />
+            <LogoMark compact className="size-8" title="" />
             <Wordmark />
           </Link>
 

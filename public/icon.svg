@@ -1,26 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pall1">
-  <defs>
-    <!--
-      Icona app. A queste dimensioni (16-80px) pallone e marcature del campo
-      diventano una macchia e la base a tre pezzi una riga sporca: resta il
-      numero 1 con la sua bandierina, che è la sagoma riconoscibile.
-      Il marchio completo vive in `logo.svg`.
-      La bandierina si sovrappone alla gamba: se le due forme si toccassero
-      soltanto, l'antialiasing lascerebbe una fessura di 1px.
-    -->
-    <mask id="pall1-mark-compact" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-      <rect width="512" height="512" fill="#000"/>
-      <g fill="#fff">
-        <path d="M215 84h136v295H215z"/>
-        <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
-        <circle cx="137" cy="176" r="40"/>
-      </g>
-      <circle cx="130" cy="202" r="32" fill="#000"/>
-    </mask>
-  </defs>
+  <!--
+    Icona app. A queste dimensioni (16-80px) pallone e marcature del campo
+    diventano una macchia e la base a tre pezzi una riga sporca: resta il
+    numero 1 con la sua bandierina, che è la sagoma riconoscibile.
+    Il marchio completo vive in `logo.svg`.
 
+    Nessuna <mask>: le marcature sono forme piene del colore del fondo. Una
+    mask dipende dal fatto che il browser la risolva, e Safari non la applica
+    in modo affidabile nelle favicon: il risultato sarebbe un quadrato pieno.
+
+    Le forme dello stesso colore si sovrappongono (la bandierina entra nella
+    gamba): se si limitassero a toccarsi, l'antialiasing lascerebbe una
+    fessura di 1px.
+  -->
   <rect width="512" height="512" rx="115" fill="#09782b"/>
+
+  <!-- senza la base il numero è più corto: lo ricentro in verticale -->
   <g transform="translate(0 26)">
-    <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark-compact)"/>
+    <g fill="#f5fcf6">
+      <path d="M215 84h136v295H215z"/>
+      <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
+      <circle cx="137" cy="176" r="40"/>
+    </g>
+    <circle cx="130" cy="202" r="32" fill="#09782b"/>
   </g>
 </svg>

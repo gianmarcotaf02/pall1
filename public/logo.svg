@@ -1,39 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pall1">
-  <defs>
-    <!--
-      Il marchio è un unico colore con le marcature del campo sottratte:
-      così funziona su qualunque fondo (chiaro, scuro, a colori).
-      Geometria su griglia 512.
-    -->
-    <mask id="pall1-mark" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-      <rect width="512" height="512" fill="#000"/>
-      <g fill="#fff">
-        <!-- gamba del numero -->
-        <path d="M215 84h136v295H215z"/>
-        <!-- base: area di porta vista dall'alto -->
-        <path d="M137 386h37v43h-37zM186 384h166v45H186zM364 386h37v43h-37z"/>
-        <!-- bandierina, termina a punta sotto la tacca -->
-        <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
-        <circle cx="137" cy="176" r="40"/>
-      </g>
-      <g fill="#000">
-        <!-- tacca che stacca la punta della bandierina -->
-        <circle cx="130" cy="202" r="32"/>
-        <!-- pallone: cinque pannelli attorno al centro -->
-        <g transform="translate(258.9 113.6) rotate(145)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(307.1 113.6) rotate(215)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(241 148) rotate(90)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(325 148) rotate(270)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(283 190) rotate(0)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-      </g>
-      <!-- linea di metà campo, cerchio di centrocampo, arco di rigore -->
-      <g fill="none" stroke="#000" stroke-width="8">
-        <path d="M215 314h136"/>
-        <circle cx="283" cy="314" r="50"/>
-        <path d="M235 379a37 37 0 0 1 74 0"/>
-      </g>
-    </mask>
-  </defs>
+  <title>Pall1</title>
+  <!--
+    Marchio completo: numero 1 con pallone, linea di metà campo, cerchio di
+    centrocampo, arco di rigore, base a tre elementi (area di porta) e
+    bandierina staccata da una tacca circolare.
 
-  <rect width="512" height="512" fill="currentColor" mask="url(#pall1-mark)"/>
+    Nessuna <mask>: le marcature del campo sono forme piene del colore del
+    fondo. Una mask dipende dal fatto che il browser la risolva, e Safari non
+    la applica in modo affidabile nelle favicon o dentro gruppi trasformati:
+    il risultato sarebbe un quadrato pieno.
+
+    Questa è la versione "positiva", per fondi chiari (carta #eef6ef).
+    Dentro l'app la stessa geometria è in `src/components/brand/logo-mark.tsx`,
+    dove le marcature prendono il colore del tema.
+  -->
+  <g fill="#09782b">
+    <path d="M215 84h136v295H215z"/>
+    <path d="M137 386h37v43h-37z"/>
+    <path d="M186 384h166v45H186z"/>
+    <path d="M364 386h37v43h-37z"/>
+    <path d="M230 84C190 96 158 130 148 166l0 28c8 34 36 52 82 58z"/>
+    <circle cx="137" cy="176" r="40"/>
+  </g>
+
+  <g fill="#eef6ef">
+    <!-- tacca che stacca la punta della bandierina -->
+    <circle cx="130" cy="202" r="32"/>
+
+    <!-- pallone: cinque pannelli attorno al centro -->
+    <g transform="translate(258.9 113.6) rotate(145)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
+    <g transform="translate(307.1 113.6) rotate(215)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
+    <g transform="translate(241 148) rotate(90)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
+    <g transform="translate(325 148) rotate(270)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
+    <g transform="translate(283 190) rotate(0)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
+
+    <!-- linea di metà campo -->
+    <rect x="215" y="310" width="136" height="8"/>
+
+    <!-- cerchio di centrocampo (anello) -->
+    <path fill-rule="evenodd" d="M229 314a54 54 0 1 0 108 0a54 54 0 1 0-108 0M237 314a46 46 0 1 0 92 0a46 46 0 1 0-92 0"/>
+
+    <!-- arco di rigore -->
+    <path d="M242 379A41 41 0 0 1 324 379A33 33 0 0 0 242 379Z"/>
+  </g>
 </svg>
