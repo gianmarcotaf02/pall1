@@ -257,32 +257,40 @@ Il logo è il numero **1** costruito come un campo da calcio: pallone in alto, l
 con cerchio di centrocampo, arco di rigore, base a tre elementi (area di porta) e bandierina
 staccata da una tacca.
 
+La forma di riferimento è `docs/logo/riferimento.jpg`: i tracciati SVG **non sono disegnati a
+mano**, sono generati con potrace da quell'immagine (`scripts/trace-logo.py`), così il marchio è
+esattamente quella forma e resta nitido a ogni dimensione.
+
 | File | Uso |
 |---|---|
-| `public/logo.svg` | marchio isolato, colori pieni, pensato per fondo carta chiaro |
-| `src/components/brand/logo-mark.tsx` | lo stesso marchio come componente React |
+| `src/components/brand/logo-paths.json` | i tracciati (`hull`, `markings`, `compact`), generati |
+| `src/components/brand/logo-mark.tsx` | il marchio come componente React |
+| `public/logo.svg` | marchio isolato, `currentColor` + crema, per qualunque fondo |
 | `public/icon.svg` | icona app: tassello verde + marchio crema |
 | `public/icon-maskable.svg` | versione maskable (fondo pieno, marchio entro l'80%) |
 | `public/icons/*.png` | 192 / 512 / apple-touch / maskable, generati |
 
-Niente `mask` SVG: pallone e marcature del campo sono **forme piene color crema** (`#f5fcf6`),
-non ritagli. Una mask dipende dal fatto che il browser la risolva, e Safari non la applica in
-modo affidabile nelle favicon o dentro gruppi trasformati (risultato: un quadrato pieno).
+Come è composto il disegno, e perché così regge su ogni fondo:
 
-Il crema delle marcature è **fisso**, non preso dal tema: se seguisse il colore della pagina, in
-tema scuro pallone e cerchio di centrocampo diventerebbero neri e il marchio sembrerebbe
-bucherellato. L'unico elemento che deve fondersi con il fondo è la **tacca della bandierina**,
-che è un vero "buco" e quindi usa `var(--paper)`: per questo il marchio completo va usato su una
-superficie con quel token (le pagine dell'app lo hanno).
+- `hull` è la **sagoma piena** (marcature comprese) e prende il colore del tema (`currentColor`).
+- `markings` è pallone e marcature del campo, dipinti **sopra** la sagoma in crema fisso
+  (`#f5fcf6`). Il crema non segue il tema: se seguisse il colore della pagina, in tema scuro
+  pallone e cerchio di centrocampo diventerebbero neri e il marchio sembrerebbe bucherellato.
+- la **tacca della bandierina** è un vuoto vero nella sagoma (la punta è un pezzo staccato):
+  lascia vedere il fondo, come nel riferimento, senza bisogno di maschere SVG né di forme
+  colorate "a imitazione" del fondo.
+- `compact` è la sagoma senza la base, per barra in alto e icona app: sotto i ~40px pallone e
+  marcature sono spessi 1-2px e la base a tre pezzi diventa una riga sporca.
 
 ```bash
-npm run logo:preview   # contatta le varie dimensioni su fondo chiaro e scuro
+npm run logo:trace     # rigenera i tracciati dal riferimento (serve python + potracer)
+npm run logo:preview   # controlla le varie dimensioni su fondo chiaro e scuro
 npm run build:icons    # rigenera i PNG in public/icons/
 ```
 
-> Nota: `public/logo.svg`, `public/icon.svg`, `public/icon-maskable.svg` e `logo-mark.tsx`
-> contengono la stessa geometria. Se cambi uno, aggiorna gli altri (i file statici servono per
-> favicon, icone PWA e anteprime; il componente per l'app).
+> Nota: i tracciati sono dati, non geometria scritta a mano. Per cambiarli si modifica
+> `docs/logo/riferimento.jpg` e si rilancia `npm run logo:trace`: `logo-paths.json`, `public/logo.svg`
+> e le due icone vengono riscritti insieme, così i quattro file non possono divergere.
 
 ---
 

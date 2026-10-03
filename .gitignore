@@ -49,3 +49,6 @@ Thumbs.db
 # artefatti locali
 .vercel
 tmp/
+
+# python (script una tantum del marchio)
+__pycache__/

@@ -16,13 +16,11 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const mark = readFileSync(resolve(root, "public/logo.svg"), "utf8")
   .replace(/<\?xml[^>]*\?>/, "")
   .replace(/(<svg[^>]*)width="[^"]*"/, "$1")
-  .replace(/(<svg[^>]*)height="[^"]*"/, "$1")
-  // come nel componente: il corpo segue il colore del tema, non l'ink fisso
-  .replace(/fill="#09782b"/g, 'fill="currentColor"');
+  .replace(/(<svg[^>]*)height="[^"]*"/, "$1");
 
 // l'icona app ha colori suoi (tassello verde + numero crema) e resta identica
 // nei due temi: nell'anteprima va usata quella, non il marchio dentro un finto
-// tassello (la tacca finirebbe del colore della banda, cioe' un punto sbagliato)
+// tassello
 const icon = readFileSync(resolve(root, "public/icon.svg"), "utf8").replace(/<\?xml[^>]*\?>/, "");
 
 const sizes = [16, 24, 32, 48, 64, 128, 256];
@@ -30,8 +28,8 @@ const sizes = [16, 24, 32, 48, 64, 128, 256];
 const sheet = `<!doctype html><html><head><meta charset="utf-8"><style>
   body { margin:0; font: 12px/1.4 system-ui, sans-serif; color:#111; }
   .band { padding: 20px 24px; }
-  .light { background:#eef6ef; color:#09782b; --paper:#eef6ef; }
-  .dark  { background:#09110a; color:#5cc46f; --paper:#09110a; }
+  .light { background:#eef6ef; color:#09782b; }
+  .dark  { background:#09110a; color:#5cc46f; }
   h2 { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; opacity:.6; margin:0 0 14px; }
   .row { display:flex; align-items:flex-end; gap:26px; }
   figure { margin:0; text-align:center; }
