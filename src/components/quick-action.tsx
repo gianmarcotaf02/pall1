@@ -3,7 +3,10 @@ import { IconChevronRight } from "@/components/icons";
 
 /**
  * Scelta rapida in home: "cosa vuoi creare?".
- * Icona su tinta d'accento, etichetta, riga di contesto e invito a destra.
+ *
+ * Due tessere sempre sulla stessa riga (anche su telefono): icona grande su
+ * tinta d'accento, poi etichetta e riga di contesto. Su schermo largo passano
+ * in orizzontale, dove c'è spazio per l'invito a destra.
  */
 export function QuickAction({
   href,
@@ -19,18 +22,20 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3.5 rounded-card border border-rule bg-surface px-4 py-3.5 transition-colors duration-150 hover:border-line-strong hover:bg-surface-2"
+      className="group flex flex-col gap-3 rounded-card border border-rule bg-surface p-3.5 transition-colors duration-150 hover:border-line-strong hover:bg-surface-2 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-accent/15 text-accent-text dark:bg-accent/25">
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-accent/15 text-accent-text dark:bg-accent/25">
         {icon}
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-medium text-ink">{title}</span>
-        <span className="block truncate text-[12px] text-muted">{hint}</span>
+        <span className="block text-[14px] font-medium leading-snug text-ink sm:text-[15px]">
+          {title}
+        </span>
+        <span className="mt-0.5 block text-[12px] leading-snug text-muted">{hint}</span>
       </span>
 
-      <IconChevronRight className="size-4 shrink-0 text-muted transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5" />
+      <IconChevronRight className="hidden size-4 shrink-0 text-muted transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 sm:block" />
     </Link>
   );
 }

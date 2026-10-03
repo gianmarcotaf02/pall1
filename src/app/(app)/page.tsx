@@ -62,22 +62,22 @@ export default async function DashboardPage() {
         description="Ecco come sta andando il nostro calcetto."
       />
 
-      {/* Scelta rapida: partita o sondaggio */}
-      <section className="mb-6 grid gap-3 sm:grid-cols-2">
+      {/* Scelta rapida: partita o sondaggio, sempre sulla stessa riga */}
+      <section className="mb-6 grid grid-cols-2 gap-3">
         {profile.is_admin ? (
           <QuickAction
             href="/admin/matches"
-            icon={<IconPitch className="size-5" />}
+            icon={<IconPitch className="size-7" />}
             title="Nuova partita"
-            hint="Data, campo e posti"
+            hint="Data, campo, posti"
           />
         ) : null}
 
         <QuickAction
           href="/polls/new"
-          icon={<IconCalendar className="size-5" />}
+          icon={<IconCalendar className="size-7" />}
           title="Nuovo sondaggio"
-          hint="Decidete giorno e orario"
+          hint="Giorno e orario"
         />
       </section>
 
