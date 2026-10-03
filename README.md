@@ -204,7 +204,7 @@ src/
 
 Token definiti in `src/app/globals.css` (Tailwind v4, `@theme inline`):
 
-- **Accento unico**: verde campo (`oklch(56% 0.15 147)`), usato solo per azioni
+- **Accento unico**: verde campo (`oklch(50% 0.145 147)` → `#09782b`), usato solo per azioni
   primarie, stato selezionato e focus.
 - **Neutri tintati** di verde verso l'accento; nessun `#000` né `#fff`, nessun gradiente.
 - **Tipografia**: *Instrument Sans* per l'interfaccia, *Archivo* per titoli e numeri

@@ -4,8 +4,8 @@
   "description": "Partite, squadre, risultati e statistiche del nostro calcetto.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f0f6f1",
-  "theme_color": "#f0f6f1",
+  "background_color": "#eef6ef",
+  "theme_color": "#eef6ef",
   "lang": "it",
   "icons": [
     {

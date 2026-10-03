@@ -11,26 +11,26 @@
 :root {
   color-scheme: light;
 
-  --paper: oklch(96.8% 0.01 148);
-  --surface: oklch(98.8% 0.006 148);
-  --surface-2: oklch(93.2% 0.016 148);
-  --rule: oklch(87.5% 0.02 148);
-  --line-strong: oklch(77% 0.026 148);
+  --paper: oklch(96.5% 0.012 148);
+  --surface: oklch(98.6% 0.008 148);
+  --surface-2: oklch(92.8% 0.02 148);
+  --rule: oklch(86.5% 0.026 148);
+  --line-strong: oklch(75% 0.032 148);
 
-  --ink: oklch(21% 0.024 152);
-  --muted: oklch(44% 0.02 150);
+  --ink: oklch(20% 0.028 152);
+  --muted: oklch(42% 0.024 150);
 
-  --accent: oklch(56% 0.15 147);
-  --accent-text: oklch(43% 0.135 148);
-  --accent-solid: oklch(44% 0.13 150);
-  --accent-solid-strong: oklch(38% 0.12 150);
+  --accent: oklch(50% 0.145 147);
+  --accent-text: oklch(40% 0.117 148);
+  --accent-solid: oklch(41% 0.118 148);
+  --accent-solid-strong: oklch(35% 0.1 148);
   --accent-on: oklch(98.5% 0.012 148);
 
-  --win: oklch(44% 0.1 162);
-  --loss: oklch(50% 0.19 25);
-  --draw: oklch(49% 0.09 75);
+  --win: oklch(41% 0.11 162);
+  --loss: oklch(48% 0.19 25);
+  --draw: oklch(47% 0.09 75);
 
-  --focus: oklch(48% 0.17 147);
+  --focus: oklch(46% 0.134 147);
 
   --shadow-card: 0 1px 1px oklch(22% 0.03 150 / 0.06), 0 10px 30px -20px oklch(22% 0.03 150 / 0.3);
   --shadow-pop: 0 1px 1px oklch(22% 0.03 150 / 0.07), 0 18px 44px -22px oklch(22% 0.03 150 / 0.42);
@@ -39,26 +39,26 @@
 .dark {
   color-scheme: dark;
 
-  --paper: oklch(17.5% 0.016 150);
-  --surface: oklch(21% 0.018 150);
-  --surface-2: oklch(25.5% 0.02 150);
-  --rule: oklch(30% 0.018 150);
-  --line-strong: oklch(40% 0.022 150);
+  --paper: oklch(16.5% 0.018 150);
+  --surface: oklch(20% 0.02 150);
+  --surface-2: oklch(24.5% 0.022 150);
+  --rule: oklch(29% 0.02 150);
+  --line-strong: oklch(39% 0.024 150);
 
-  --ink: oklch(94% 0.01 150);
-  --muted: oklch(73% 0.018 152);
+  --ink: oklch(94% 0.012 150);
+  --muted: oklch(72.5% 0.02 152);
 
-  --accent: oklch(72% 0.15 148);
-  --accent-text: oklch(80% 0.14 148);
-  --accent-solid: oklch(75% 0.15 148);
-  --accent-solid-strong: oklch(82% 0.14 148);
-  --accent-on: oklch(17% 0.03 150);
+  --accent: oklch(68% 0.18 148);
+  --accent-text: oklch(76% 0.19 148);
+  --accent-solid: oklch(68% 0.185 148);
+  --accent-solid-strong: oklch(74% 0.195 148);
+  --accent-on: oklch(15% 0.04 150);
 
-  --win: oklch(74% 0.12 162);
+  --win: oklch(73% 0.13 162);
   --loss: oklch(70% 0.16 25);
   --draw: oklch(78% 0.09 80);
 
-  --focus: oklch(76% 0.16 148);
+  --focus: oklch(72% 0.2 148);
 
   --shadow-card: 0 1px 1px oklch(6% 0.02 150 / 0.5), 0 10px 30px -20px oklch(6% 0.02 150 / 0.75);
   --shadow-pop: 0 1px 1px oklch(6% 0.02 150 / 0.55), 0 18px 44px -22px oklch(6% 0.02 150 / 0.85);
