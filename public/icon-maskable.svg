@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pall1">
   <defs>
-    <mask id="pall1-mark" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+    <mask id="pall1-mark-compact" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
       <rect width="512" height="512" fill="#000"/>
       <g fill="#fff">
         <path d="M215 84h136v295H215z"/>
@@ -8,25 +8,13 @@
         <path d="M215 84C184 98 160 130 148 166l0 28c8 34 36 52 67 58z"/>
         <circle cx="137" cy="176" r="40"/>
       </g>
-      <g fill="#000">
-        <circle cx="130" cy="202" r="32"/>
-        <g transform="translate(258.9 113.6) rotate(145)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(307.1 113.6) rotate(215)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(241 148) rotate(90)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(325 148) rotate(270)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-        <g transform="translate(283 190) rotate(0)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
-      </g>
-      <g fill="none" stroke="#000" stroke-width="8">
-        <path d="M215 314h136"/>
-        <circle cx="283" cy="314" r="50"/>
-        <path d="M235 379a37 37 0 0 1 74 0"/>
-      </g>
+      <circle cx="130" cy="202" r="32" fill="#000"/>
     </mask>
   </defs>
 
   <!-- versione maskable: fondo pieno, marchio entro la zona sicura (80%) -->
   <rect width="512" height="512" fill="#09782b"/>
-  <g transform="translate(102 102) scale(0.6)">
-    <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark)"/>
+  <g transform="translate(64 64) scale(0.75)">
+    <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark-compact)"/>
   </g>
 </svg>

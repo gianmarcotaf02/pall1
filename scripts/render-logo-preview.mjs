@@ -58,6 +58,19 @@ const sheet = `<!doctype html><html><head><meta charset="utf-8"><style>
       <figure><span class="tile">${mark.replace("<svg", `<svg style="width:96px;height:96px"`)}</span><figcaption>app</figcaption></figure>
     </div>
   </div>
+  <div class="band light">
+    <h2>Icona app — dimensioni reali</h2>
+    <div class="row">
+      ${[16, 20, 24, 28, 32, 40, 48, 64, 96]
+        .map(
+          (size) =>
+            `<figure>${readFileSync(resolve(root, "public/icon.svg"), "utf8")
+              .replace(/<\?xml[^>]*\?>/, "")
+              .replace("<svg", `<svg style="width:${size}px;height:${size}px"`)}<figcaption>${size}</figcaption></figure>`,
+        )
+        .join("")}
+    </div>
+  </div>
 </body></html>`;
 
 mkdirSync(resolve(root, "tmp"), { recursive: true });

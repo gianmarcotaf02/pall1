@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { signOutAction } from "@/lib/actions/auth";
 import { Avatar } from "@/components/ui/avatar";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BottomNav, RailNav } from "@/components/nav";
 import { IconLogout, IconShield } from "@/components/icons";
 import type { Profile } from "@/types/domain";
 
-function Wordmark({ compact = false }: { compact?: boolean }) {
+function Wordmark() {
   return (
     <span className="font-display text-[19px] font-bold tracking-[-0.03em] text-ink">
       Pall<span className="text-accent-text">1</span>
-      {compact ? null : <span className="sr-only"> — calcetto tra amici</span>}
     </span>
   );
 }
@@ -26,7 +26,8 @@ export function AppShell({
     <div className="min-h-dvh md:grid md:grid-cols-[232px_1fr]">
       {/* Rail desktop */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-rule px-3 py-5 md:flex">
-        <div className="px-3 pb-6">
+        <div className="flex items-center gap-2.5 px-3 pb-6">
+          <LogoMark compact className="size-8 text-accent-solid" title="" />
           <Wordmark />
         </div>
 
@@ -64,8 +65,9 @@ export function AppShell({
       <div className="flex min-w-0 flex-col">
         {/* Barra mobile */}
         <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule bg-paper px-4 md:hidden">
-          <Link href="/" className="flex items-center">
-            <Wordmark compact />
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Pall1 — home">
+            <LogoMark compact className="size-8 text-accent-solid" title="" />
+            <Wordmark />
           </Link>
 
           <div className="ml-auto flex items-center gap-1">
