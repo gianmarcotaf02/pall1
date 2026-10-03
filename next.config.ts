@@ -10,6 +10,24 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "3mb",
     },
   },
+  /**
+   * Favicon e icone PWA hanno nome fisso (niente hash nel path), quindi il
+   * browser se le tiene in cache per giorni: dopo un cambio di marchio l'utente
+   * continua a vedere la versione vecchia. Le facciamo rivalidare sempre.
+   * I file sono < 20 kB: il costo di una richiesta è trascurabile.
+   */
+  async headers() {
+    const revalidate = [
+      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+    ];
+
+    return [
+      { source: "/icon.svg", headers: revalidate },
+      { source: "/icon-maskable.svg", headers: revalidate },
+      { source: "/manifest.webmanifest", headers: revalidate },
+      { source: "/icons/:file*", headers: revalidate },
+    ];
+  },
 };
 
 export default nextConfig;
