@@ -2,9 +2,10 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { NextMatchPanel } from "@/components/match/next-match";
 import { PollCard } from "@/components/polls/poll-card";
+import { QuickAction } from "@/components/quick-action";
 import { StandingsTable } from "@/components/stats/standings-table";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
-import { buttonClass } from "@/components/ui/button";
+import { IconCalendar, IconPitch } from "@/components/icons";
 import { requireProfile } from "@/lib/auth";
 import { formatMatchDate } from "@/lib/format";
 import {
@@ -59,14 +60,26 @@ export default async function DashboardPage() {
       <PageHeader
         title={`Ciao, ${profile.nickname}`}
         description="Ecco come sta andando il nostro calcetto."
-        action={
-          profile.is_admin ? (
-            <Link href="/admin/matches" className={buttonClass({ variant: "secondary", size: "sm" })}>
-              Nuova partita
-            </Link>
-          ) : null
-        }
       />
+
+      {/* Scelta rapida: partita o sondaggio */}
+      <section className="mb-6 grid gap-3 sm:grid-cols-2">
+        {profile.is_admin ? (
+          <QuickAction
+            href="/admin/matches"
+            icon={<IconPitch className="size-5" />}
+            title="Nuova partita"
+            hint="Data, campo e posti"
+          />
+        ) : null}
+
+        <QuickAction
+          href="/polls/new"
+          icon={<IconCalendar className="size-5" />}
+          title="Nuovo sondaggio"
+          hint="Decidete giorno e orario"
+        />
+      </section>
 
       {next ? (
         <NextMatchPanel match={next} myAttendance={myAttendance} />
@@ -74,13 +87,6 @@ export default async function DashboardPage() {
         <EmptyState
           title="Nessuna partita in programma"
           description="Quando l'admin ne crea una, la trovi qui con i posti disponibili."
-          action={
-            profile.is_admin ? (
-              <Link href="/admin/matches" className={buttonClass({ size: "sm" })}>
-                Crea la prossima partita
-              </Link>
-            ) : null
-          }
         />
       )}
 

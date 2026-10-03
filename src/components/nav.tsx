@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  IconCalendar,
+  IconHome,
   IconPitch,
   IconPodium,
   IconPoll,
@@ -13,8 +13,8 @@ import {
 } from "@/components/icons";
 
 const ITEMS = [
-  { href: "/", label: "Home", Icon: IconPitch, exact: true, also: [] },
-  { href: "/matches", label: "Partite", Icon: IconCalendar, exact: false, also: ["/polls"] },
+  { href: "/", label: "Home", Icon: IconHome, exact: true, also: [] },
+  { href: "/matches", label: "Partite", Icon: IconPitch, exact: false, also: ["/polls"] },
   { href: "/standings", label: "Classifica", Icon: IconPodium, exact: false, also: [] },
   { href: "/players", label: "Giocatori", Icon: IconUsers, exact: false, also: [] },
   { href: "/profile", label: "Profilo", Icon: IconUser, exact: false, also: [] },
