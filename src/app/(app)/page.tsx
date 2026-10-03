@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { NextMatchPanel } from "@/components/match/next-match";
+import { PollCard } from "@/components/polls/poll-card";
 import { StandingsTable } from "@/components/stats/standings-table";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
   getMyAttendance,
   listMatches,
   listPlayerStats,
+  listPolls,
   listProfiles,
   listStandings,
   splitMatches,
@@ -23,11 +25,14 @@ export default async function DashboardPage() {
   const next = upcoming[0] ?? null;
   const myAttendance = next ? await getMyAttendance(next.id, profile.id) : null;
 
-  const [standings, stats, players] = await Promise.all([
+  const [standings, stats, players, polls] = await Promise.all([
     listStandings(),
     listPlayerStats(),
     listProfiles(),
+    listPolls(profile.id),
   ]);
+
+  const openPolls = polls.filter((poll) => !poll.closed);
 
   const nicknameById = new Map(players.map((p) => [p.id, p.nickname]));
   const scorers = stats
@@ -69,6 +74,25 @@ export default async function DashboardPage() {
           }
         />
       )}
+
+      {openPolls.length > 0 ? (
+        <section className="mt-8">
+          <SectionTitle
+            action={
+              <Link href="/polls" className="text-[13px] font-medium text-accent-text hover:underline">
+                Tutti i sondaggi
+              </Link>
+            }
+          >
+            Sondaggi aperti
+          </SectionTitle>
+          <div className="divide-y divide-rule overflow-hidden rounded-card border border-rule bg-surface">
+            {openPolls.slice(0, 3).map((poll) => (
+              <PollCard key={poll.id} poll={poll} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section>

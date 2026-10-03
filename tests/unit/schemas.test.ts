@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   loginSchema,
   matchSchema,
+  pollSchema,
   profileSchema,
   registerSchema,
   resultSchema,
@@ -142,6 +143,51 @@ describe("errorMessage", () => {
 
   it("traduce gli errori di credenziali", () => {
     expect(errorMessage({ message: "Invalid login credentials" })).toMatch(/email o password/i);
+  });
+});
+
+describe("pollSchema", () => {
+  const base = {
+    question: "Quale giorno giochiamo?",
+    details: "",
+    closes_at: "",
+    options: [
+      { label: "Martedì", starts_at: "" },
+      { label: "Giovedì", starts_at: "" },
+    ],
+  };
+
+  it("accetta un sondaggio con due opzioni", () => {
+    const parsed = pollSchema.parse(base);
+    expect(parsed.options).toHaveLength(2);
+    expect(parsed.question).toBe("Quale giorno giochiamo?");
+  });
+
+  it("rifiuta meno di due opzioni", () => {
+    const result = pollSchema.safeParse({ ...base, options: [{ label: "Martedì" }] });
+    expect(result.success).toBe(false);
+  });
+
+  it("rifiuta una domanda troppo corta", () => {
+    const result = pollSchema.safeParse({ ...base, question: "Ok" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rifiuta più di dodici opzioni", () => {
+    const options = Array.from({ length: 13 }, (_, index) => ({ label: `Opzione ${index + 1}` }));
+    const result = pollSchema.safeParse({ ...base, options });
+    expect(result.success).toBe(false);
+  });
+
+  it("accetta opzioni collegate a una data", () => {
+    const parsed = pollSchema.parse({
+      ...base,
+      options: [
+        { label: "Martedì 21:00", starts_at: "2026-06-15T21:00" },
+        { label: "Giovedì 21:00", starts_at: "2026-06-17T21:00" },
+      ],
+    });
+    expect(parsed.options[0].starts_at).toBe("2026-06-15T21:00");
   });
 });
 

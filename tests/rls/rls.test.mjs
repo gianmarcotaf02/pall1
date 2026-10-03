@@ -66,19 +66,21 @@ try {
   console.log("Preparazione utenti di prova…");
   const player = await createUser(`probe${stamp}`);
   const other = await createUser(`other${stamp}`);
-  created.push(player.id, other.id);
+  const third = await createUser(`third${stamp}`);
+  created.push(player.id, other.id, third.id);
 
   // Il trigger handle_new_user deve aver creato i profili.
   const { data: profiles } = await admin
     .from("profiles")
     .select("id, nickname, is_admin")
-    .in("id", [player.id, other.id]);
+    .in("id", [player.id, other.id, third.id]);
 
-  check("il trigger crea il profilo alla registrazione", (profiles ?? []).length === 2);
+  check("il trigger crea il profilo alla registrazione", (profiles ?? []).length === 3);
   check("i nuovi utenti non sono admin", (profiles ?? []).every((p) => p.is_admin === false));
 
   const playerClient = await signIn(player.email);
   const otherClient = await signIn(other.email);
+  const thirdClient = await signIn(third.email);
 
   console.log("\nLetture");
   const anonClient = createClient(url, anonKey, { auth: { persistSession: false } });
@@ -87,7 +89,6 @@ try {
 
   const authRead = await playerClient.from("profiles").select("id");
   check("un utente autenticato legge i profili", (authRead.data ?? []).length >= 2);
-
   console.log("\nScritture di dominio");
   const matchInsert = await playerClient
     .from("matches")
@@ -157,24 +158,22 @@ try {
 
   console.log("\nCapienza");
   await admin.from("matches").update({ max_players: 2 }).eq("id", match.id);
-  await playerClient
+
+  const otherJoin = await otherClient
     .from("match_players")
-    .upsert({ match_id: match.id, profile_id: other.id, attendance: "present" });
-  const { data: third } = await admin
-    .from("profiles")
-    .select("id")
-    .neq("id", player.id)
-    .neq("id", other.id)
-    .limit(1);
-  if (third && third.length > 0) {
-    const full = await admin
-      .from("match_players")
-      .insert({ match_id: match.id, profile_id: third[0].id, attendance: "present" })
-      .select("id");
-    check("la capienza è rispettata", (full.data ?? []).length === 0, full.error?.message);
-  } else {
-    console.log("  skip capienza (servono almeno 3 profili: registra un altro utente)");
-  }
+    .insert({ match_id: match.id, profile_id: other.id, attendance: "present" })
+    .select("id");
+  check("il secondo giocatore si iscrive da solo", (otherJoin.data ?? []).length === 1, otherJoin.error?.message);
+
+  const full = await thirdClient
+    .from("match_players")
+    .insert({ match_id: match.id, profile_id: third.id, attendance: "present" })
+    .select("id");
+  check(
+    "il terzo con la partita piena viene respinto",
+    (full.data ?? []).length === 0 && full.error !== null,
+    full.error?.message,
+  );
 
   console.log("\nTransizioni di stato");
   const teamsSet = await admin.from("matches").update({ status: "teams_set" }).eq("id", match.id);
@@ -183,6 +182,95 @@ try {
     teamsSet.error !== null,
     teamsSet.error?.message,
   );
+
+  /* ---------------- Sondaggi ---------------- */
+
+  console.log("\nSondaggi");
+  const pollInsert = await playerClient
+    .from("polls")
+    .insert({ question: `Sondaggio RLS ${stamp}`, allow_multiple: true, created_by: player.id })
+    .select("id")
+    .single();
+  check("un membro crea un sondaggio", Boolean(pollInsert.data?.id), pollInsert.error?.message);
+
+  const pollId = pollInsert.data.id;
+
+  const optionsInsert = await playerClient
+    .from("poll_options")
+    .insert([
+      { poll_id: pollId, label: "Martedì", sort_order: 0 },
+      { poll_id: pollId, label: "Giovedì", sort_order: 1 },
+    ])
+    .select("id, sort_order");
+  check("l'autore aggiunge le opzioni", (optionsInsert.data ?? []).length === 2, optionsInsert.error?.message);
+
+  const optionIds = (optionsInsert.data ?? []).map((row) => row.id);
+
+  const foreignVote = await otherClient
+    .from("poll_votes")
+    .insert({ poll_id: pollId, option_id: optionIds[0], profile_id: player.id })
+    .select("id");
+  check(
+    "non si vota a nome di un altro",
+    (foreignVote.data ?? []).length === 0,
+    foreignVote.error?.message,
+  );
+
+  const ownVote = await otherClient
+    .from("poll_votes")
+    .insert({ poll_id: pollId, option_id: optionIds[1], profile_id: other.id })
+    .select("id")
+    .single();
+  check("si vota per sé", Boolean(ownVote.data?.id), ownVote.error?.message);
+
+  const votes = await playerClient.from("poll_votes").select("profile_id, option_id");
+  check("tutti vedono chi ha votato cosa", (votes.data ?? []).length >= 1);
+
+  const foreignOption = await otherClient
+    .from("poll_options")
+    .insert({ poll_id: pollId, label: "Intruso", sort_order: 2 })
+    .select("id");
+  check(
+    "solo l'autore aggiunge opzioni",
+    (foreignOption.data ?? []).length === 0,
+    foreignOption.error?.message,
+  );
+
+  const foreignClose = await otherClient
+    .from("polls")
+    .update({ is_closed: true })
+    .eq("id", pollId)
+    .select("id");
+  check(
+    "solo l'autore (o un admin) chiude il sondaggio",
+    (foreignClose.data ?? []).length === 0,
+    foreignClose.error?.message,
+  );
+
+  const hijack = await playerClient
+    .from("polls")
+    .update({ question: "Domanda dirottata" })
+    .eq("id", pollId)
+    .select("question")
+    .single();
+  check(
+    "la domanda non si modifica dopo la creazione",
+    hijack.data?.question?.startsWith("Sondaggio RLS"),
+    hijack.data?.question,
+  );
+
+  await playerClient.from("polls").update({ is_closed: true }).eq("id", pollId);
+  const voteOnClosed = await otherClient
+    .from("poll_votes")
+    .insert({ poll_id: pollId, option_id: optionIds[0], profile_id: other.id })
+    .select("id");
+  check(
+    "non si vota su un sondaggio chiuso",
+    (voteOnClosed.data ?? []).length === 0,
+    voteOnClosed.error?.message,
+  );
+
+  await admin.from("polls").delete().eq("id", pollId);
 
   // Pulizia
   await admin.from("matches").delete().eq("id", match.id);

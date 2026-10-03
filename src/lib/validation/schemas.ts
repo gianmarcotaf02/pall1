@@ -119,3 +119,35 @@ export const adminProfileSchema = z.object({
 
 export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 export const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export const MIN_POLL_OPTIONS = 2;
+export const MAX_POLL_OPTIONS = 12;
+
+export const pollSchema = z.object({
+  question: z
+    .string()
+    .trim()
+    .min(3, "Scrivi la domanda (almeno 3 caratteri).")
+    .max(160, "La domanda può avere al massimo 160 caratteri."),
+  details: z.string().trim().max(500, "Massimo 500 caratteri.").optional(),
+  closes_at: z.string().optional(),
+  options: z
+    .array(
+      z.object({
+        label: z.string().trim().max(80, "Massimo 80 caratteri per opzione."),
+        starts_at: z.string().optional(),
+      }),
+    )
+    .min(MIN_POLL_OPTIONS, `Servono almeno ${MIN_POLL_OPTIONS} opzioni.`)
+    .max(MAX_POLL_OPTIONS, `Massimo ${MAX_POLL_OPTIONS} opzioni.`),
+});
+
+export const pollVoteSchema = z.object({
+  poll_id: z.string().uuid("Sondaggio non valido."),
+  option_id: z.string().uuid("Opzione non valida."),
+});
+
+export const pollStatusSchema = z.object({
+  poll_id: z.string().uuid("Sondaggio non valido."),
+  is_closed: z.enum(["true", "false"]),
+});

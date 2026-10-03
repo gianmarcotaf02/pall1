@@ -6,6 +6,10 @@ import type {
   MatchRow,
   PlayerRole,
   PlayerStatsRow,
+  PollDetail,
+  PollOptionResult,
+  PollRow,
+  PollSummary,
   Profile,
   RosterEntry,
   StandingRow,
@@ -187,4 +191,106 @@ export async function listPlayerStats(): Promise<PlayerStatsRow[]> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.from("player_stats").select("*");
   return data ?? [];
+}
+
+/* ------------------------------------------------------------------ */
+/* Sondaggi                                                            */
+/* ------------------------------------------------------------------ */
+
+type PollOptionLite = {
+  id: string;
+  poll_id: string;
+  label: string;
+  starts_at: string | null;
+  sort_order: number;
+};
+
+type PollVoteLite = { poll_id: string; option_id: string; profile_id: string };
+type ProfileLite = { id: string; nickname: string; avatar_url: string | null };
+
+async function loadPollData() {
+  const supabase = await createSupabaseServerClient();
+  const [pollsResult, optionsResult, votesResult, profilesResult] = await Promise.all([
+    supabase.from("polls").select("*").order("created_at", { ascending: false }),
+    supabase.from("poll_options").select("id, poll_id, label, starts_at, sort_order").order("sort_order"),
+    supabase.from("poll_votes").select("poll_id, option_id, profile_id"),
+    supabase.from("profiles").select("id, nickname, avatar_url"),
+  ]);
+
+  return {
+    polls: pollsResult.data ?? [],
+    options: (optionsResult.data ?? []) as PollOptionLite[],
+    votes: (votesResult.data ?? []) as PollVoteLite[],
+    profiles: (profilesResult.data ?? []) as ProfileLite[],
+  };
+}
+
+export function isPollClosed(poll: { is_closed: boolean; closes_at: string | null }) {
+  if (poll.is_closed) return true;
+  return poll.closes_at !== null && new Date(poll.closes_at).getTime() <= Date.now();
+}
+
+function toPollSummary(
+  poll: PollRow,
+  data: Awaited<ReturnType<typeof loadPollData>>,
+  myProfileId: string,
+): PollSummary {
+  const options = data.options.filter((option) => option.poll_id === poll.id);
+  const votes = data.votes.filter((vote) => vote.poll_id === poll.id);
+  const creator = data.profiles.find((profile) => profile.id === poll.created_by);
+
+  return {
+    id: poll.id,
+    question: poll.question,
+    details: poll.details,
+    allowMultiple: poll.allow_multiple,
+    closesAt: poll.closes_at,
+    isClosed: poll.is_closed,
+    closed: isPollClosed(poll),
+    createdAt: poll.created_at,
+    createdBy: poll.created_by,
+    creatorNickname: creator?.nickname ?? "—",
+    creatorAvatarUrl: creator?.avatar_url ?? null,
+    optionCount: options.length,
+    voterCount: new Set(votes.map((vote) => vote.profile_id)).size,
+    myVotes: votes.filter((vote) => vote.profile_id === myProfileId).map((vote) => vote.option_id),
+  };
+}
+
+export async function listPolls(myProfileId: string): Promise<PollSummary[]> {
+  const data = await loadPollData();
+  return data.polls.map((poll) => toPollSummary(poll, data, myProfileId));
+}
+
+export async function getPollDetail(
+  id: string,
+  myProfileId: string,
+): Promise<PollDetail | null> {
+  const data = await loadPollData();
+  const poll = data.polls.find((item) => item.id === id);
+  if (!poll) return null;
+
+  const profileById = new Map(data.profiles.map((profile) => [profile.id, profile]));
+
+  const options: PollOptionResult[] = data.options
+    .filter((option) => option.poll_id === poll.id)
+    .map((option) => ({
+      id: option.id,
+      label: option.label,
+      startsAt: option.starts_at,
+      sortOrder: option.sort_order,
+      voters: data.votes
+        .filter((vote) => vote.option_id === option.id)
+        .map((vote) => {
+          const profile = profileById.get(vote.profile_id);
+          return {
+            profileId: vote.profile_id,
+            nickname: profile?.nickname ?? "—",
+            avatarUrl: profile?.avatar_url ?? null,
+          };
+        })
+        .sort((a, b) => a.nickname.localeCompare(b.nickname)),
+    }));
+
+  return { ...toPollSummary(poll, data, myProfileId), options };
 }

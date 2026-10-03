@@ -6,22 +6,24 @@ import {
   IconCalendar,
   IconPitch,
   IconPodium,
+  IconPoll,
   IconShield,
   IconUser,
   IconUsers,
 } from "@/components/icons";
 
 const ITEMS = [
-  { href: "/", label: "Home", Icon: IconPitch, exact: true },
-  { href: "/matches", label: "Partite", Icon: IconCalendar, exact: false },
-  { href: "/standings", label: "Classifica", Icon: IconPodium, exact: false },
-  { href: "/players", label: "Giocatori", Icon: IconUsers, exact: false },
-  { href: "/profile", label: "Profilo", Icon: IconUser, exact: false },
+  { href: "/", label: "Home", Icon: IconPitch, exact: true, also: [] },
+  { href: "/matches", label: "Partite", Icon: IconCalendar, exact: false, also: ["/polls"] },
+  { href: "/standings", label: "Classifica", Icon: IconPodium, exact: false, also: [] },
+  { href: "/players", label: "Giocatori", Icon: IconUsers, exact: false, also: [] },
+  { href: "/profile", label: "Profilo", Icon: IconUser, exact: false, also: [] },
 ] as const;
 
-function isActive(pathname: string, href: string, exact: boolean) {
+function isActive(pathname: string, href: string, exact: boolean, also: readonly string[] = []) {
   if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+  return also.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export function RailNav({ isAdmin }: { isAdmin: boolean }) {
@@ -29,8 +31,8 @@ export function RailNav({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <nav className="flex flex-col gap-0.5" aria-label="Navigazione principale">
-      {ITEMS.map(({ href, label, Icon, exact }) => {
-        const active = isActive(pathname, href, exact);
+      {ITEMS.map(({ href, label, Icon, exact, also }) => {
+        const active = isActive(pathname, href, exact, also);
         return (
           <Link
             key={href}
@@ -66,6 +68,20 @@ export function RailNav({ isAdmin }: { isAdmin: boolean }) {
           </span>
         </Link>
       ) : null}
+
+      <Link
+        href="/polls"
+        aria-current={pathname.startsWith("/polls") ? "page" : undefined}
+        className={[
+          "flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
+          pathname.startsWith("/polls")
+            ? "bg-surface-2 font-medium text-ink"
+            : "text-muted hover:bg-surface-2 hover:text-ink",
+        ].join(" ")}
+      >
+        <IconPoll className="size-[18px]" />
+        Sondaggi
+      </Link>
     </nav>
   );
 }
@@ -79,8 +95,8 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface pb-[max(env(safe-area-inset-bottom),0.25rem)] md:hidden"
     >
       <ul className="flex items-stretch">
-        {ITEMS.map(({ href, label, Icon, exact }) => {
-          const active = isActive(pathname, href, exact);
+        {ITEMS.map(({ href, label, Icon, exact, also }) => {
+          const active = isActive(pathname, href, exact, also);
           return (
             <li key={href} className="flex-1">
               <Link

@@ -5,13 +5,24 @@ import { MatchRow } from "@/components/match/match-row";
 import { CreateMatchForm } from "@/components/admin/create-match-form";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/lib/auth";
-import { defaultMatchDateLocal } from "@/lib/format";
+import { defaultMatchDateLocal, toDatetimeLocalValue } from "@/lib/format";
 import { listMatches, splitMatches } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Partite · Gestione" };
 
-export default async function AdminMatchesPage() {
+export default async function AdminMatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   await requireAdmin();
+  const params = await searchParams;
+
+  const fromPoll = params.date && !Number.isNaN(Date.parse(params.date)) ? params.date : null;
+  const defaultDateLocal = fromPoll
+    ? toDatetimeLocalValue(fromPoll)
+    : defaultMatchDateLocal();
+
   const matches = await listMatches();
   const { upcoming, past } = splitMatches(matches);
 
@@ -29,7 +40,12 @@ export default async function AdminMatchesPage() {
 
       <section className="rounded-card border border-rule bg-surface p-4 md:p-5">
         <h2 className="mb-4 text-[15px] font-semibold text-ink">Nuova partita</h2>
-        <CreateMatchForm defaultDateLocal={defaultMatchDateLocal()} />
+        {fromPoll ? (
+          <p className="mb-4 rounded-control border border-rule bg-paper px-3 py-2 text-[12.5px] text-muted">
+            Data precompilata dall&apos;opzione del sondaggio. Controlla l&apos;orario e il campo.
+          </p>
+        ) : null}
+        <CreateMatchForm defaultDateLocal={defaultDateLocal} />
       </section>
 
       <section className="mt-8">

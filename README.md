@@ -11,6 +11,18 @@ iscrizioni, formazione delle squadre, risultati, classifica e statistiche.
 Progetto Supabase: `pall1` · ref `yivbesunamjxdmbczmda` · regione Frankfurt
 Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 
+## Cosa fa
+
+- **Partite:** l'admin crea data, campo e posti; ognuno conferma *Ci sono / Forse / Non ci sono*.
+  Capienza rispettata dal database, non dall'interfaccia.
+- **Squadre:** assegnazione manuale o **bilanciamento automatico** (portieri divisi, poi riempimento).
+- **Risultato:** punteggio, gol, assist e MVP; la chiusura della partita alimenta le statistiche.
+- **Sondaggi** (stile WhatsApp): domanda + opzioni, a scelta singola o multipla, con **chi ha
+  votato cosa visibile a tutti**; chiudi, riapri o elimina i tuoi. Le opzioni possono portare una
+  data e ora, così l'admin crea la partita con un click.
+- **Statistiche:** classifica e tabella per giocatore, calcolate in SQL.
+- **Profilo:** nickname unico, ruoli multipli con preferito, numero di maglia, avatar.
+
 ---
 
 ## 1. Cose da fare a mano (una volta sola)
@@ -152,6 +164,8 @@ remoto (`supabase migration list` → local = remote).
 | `…_rls_policies` | RLS su tutte le tabelle |
 | `…_views_stats` | view `player_stats` e `standings` (`security_invoker`) |
 | `…_storage_avatars` | bucket `avatars` + policy |
+| `…_polls` | `polls`, `poll_options`, `poll_votes` + trigger + RLS |
+| `…_poll_options_sort_order` | rinomina `position` → `sort_order` (parola riservata SQL + attrito PostgREST) |
 
 ```bash
 supabase link --project-ref yivbesunamjxdmbczmda
@@ -170,6 +184,10 @@ npm run gen:types         # rigenera i tipi TypeScript
 - Il numero di maglia è unico **tra i giocatori attivi**.
 - `played` e `teams_set` sono validati da trigger: non si chiude una partita senza
   risultato, non si confermano le squadre con giocatori non assegnati.
+- **Sondaggi:** chiunque può crearne uno; ognuno vota solo per sé e solo su sondaggi aperti;
+  tutti vedono chi ha votato cosa; domanda e tipo di voto non si modificano dopo la creazione
+  (invaliderebbero i voti); l'autore o un admin chiude e cancella.
+- Un sondaggio a scelta singola sostituisce automaticamente il voto precedente (trigger).
 
 ---
 
@@ -180,16 +198,18 @@ src/
 ├─ app/
 │  ├─ (auth)/          login, registrazione, reset password
 │  ├─ (app)/           shell autenticata: home, partite, classifica, giocatori, profilo
+│  │  ├─ polls/        sondaggi: elenco, dettaglio, nuovo
 │  │  └─ admin/        pannello di gestione (solo admin)
 │  ├─ auth/callback/   scambio del codice di conferma in sessione
 │  └─ globals.css      design system a token (OKLCH)
 ├─ components/
 │  ├─ ui/              primitive: button, field, badge, avatar, empty state
 │  ├─ match/           pannello partita, controllo presenza
+│  ├─ polls/           card, risultati cliccabili, form di creazione
 │  ├─ admin/           form e pannelli di gestione
 │  └─ …
 ├─ lib/
-│  ├─ actions/         Server Actions (auth, profilo, iscrizioni, admin)
+│  ├─ actions/         Server Actions (auth, profilo, iscrizioni, sondaggi, admin)
 │  ├─ supabase/        client server-side + refresh in proxy
 │  ├─ queries.ts       letture tipizzate
 │  ├─ validation/      schemi Zod
@@ -237,7 +257,8 @@ richiederebbero il login a Vercel anche per gli amici.
 
 - **Unitari** (`npm test`): schemi Zod, traduzione errori, conversioni di fuso orario.
 - **RLS** (`npm run test:rls`): crea utenti di prova con la service role key e verifica
-  con la anon key che letture e scritture siano davvero limitate. Pulizia automatica.
+  con la anon key che letture e scritture siano davvero limitate (23 controlli, sondaggi
+  inclusi). Pulizia automatica.
 - **E2E** (`npm run test:e2e`): flussi di accesso su viewport mobile e desktop.
 
 I test RLS sono la rete di sicurezza più importante: se una policy si allenta, se ne

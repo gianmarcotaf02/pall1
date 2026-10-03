@@ -6,6 +6,9 @@ export type Attendance = Database["public"]["Enums"]["attendance_status"];
 export type TeamSide = Database["public"]["Enums"]["team_side"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type PollRow = Database["public"]["Tables"]["polls"]["Row"];
+export type PollOptionRow = Database["public"]["Tables"]["poll_options"]["Row"];
+export type PollVoteRow = Database["public"]["Tables"]["poll_votes"]["Row"];
 export type MatchRow = Database["public"]["Tables"]["matches"]["Row"];
 export type MatchPlayerRow = Database["public"]["Tables"]["match_players"]["Row"];
 export type MatchResultRow = Database["public"]["Tables"]["match_results"]["Row"];
@@ -44,4 +47,44 @@ export type MatchDetail = {
   match: MatchRow;
   roster: RosterEntry[];
   result: MatchResultRow | null;
+};
+
+/* ------------------------------------------------------------------ */
+/* Sondaggi                                                            */
+/* ------------------------------------------------------------------ */
+
+export type PollVoter = {
+  profileId: string;
+  nickname: string;
+  avatarUrl: string | null;
+};
+
+export type PollOptionResult = {
+  id: string;
+  label: string;
+  startsAt: string | null;
+  sortOrder: number;
+  voters: PollVoter[];
+};
+
+export type PollSummary = {
+  id: string;
+  question: string;
+  details: string | null;
+  allowMultiple: boolean;
+  closesAt: string | null;
+  isClosed: boolean;
+  /** Chiuso a mano oppure oltre la scadenza. */
+  closed: boolean;
+  createdAt: string;
+  createdBy: string;
+  creatorNickname: string;
+  creatorAvatarUrl: string | null;
+  optionCount: number;
+  voterCount: number;
+  myVotes: string[];
+};
+
+export type PollDetail = PollSummary & {
+  options: PollOptionResult[];
 };
