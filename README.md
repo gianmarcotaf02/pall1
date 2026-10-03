@@ -30,37 +30,53 @@ L'organizzazione `FantaNews` è ormai vuota (i vecchi progetti `fanta360` e
 > La CLI `supabase` non espone `orgs delete`: da riga di comando è impossibile
 > (solo `orgs list` e `orgs create`).
 
-### 1.2 Configurare gli URL di autenticazione
+### 1.2 URL di autenticazione ✅ già configurati
 
-Senza questo passaggio i link di conferma email e di reset password puntano al posto
-sbagliato in produzione.
+Site URL e Redirect URLs **sono già impostati** su `https://pall1.vercel.app` e sulla
+wildcard delle preview deploy. Il link di conferma email ora porta su Vercel, non più
+su `localhost`.
 
-1. Vai su <https://supabase.com/dashboard/project/yivbesunamjxdmbczmda/auth/url-configuration>
-2. **Site URL**: `https://pall1.vercel.app` (o il dominio custom, se ne userai uno)
-3. **Redirect URLs** — aggiungi tutte queste:
-   - `http://localhost:3000/auth/callback`
-   - `https://pall1.vercel.app/auth/callback`
-   - `https://*-<team-vercel>.vercel.app/auth/callback` (per le preview deploy)
-4. Salva.
+Se in futuro cambi dominio (o aggiungi le preview di un altro team), aggiorna la
+sezione `[auth]` di `supabase/config.toml` e ripubblica:
 
-Verifica anche che in **Auth → Providers** sia attivo **solo Email** (nessun OAuth):
-<https://supabase.com/dashboard/project/yivbesunamjxdmbczmda/auth/providers>
+```bash
+supabase config push
+```
 
-### 1.3 Creare il primo amministratore
+> Attenzione: `config push` invia **tutta** la configurazione auth locale, non solo gli
+> URL. La CLI mostra il diff e chiede conferma: leggilo prima di dire sì.
 
-1. Apri l'app e **registrati** normalmente.
-2. Conferma l'email.
-3. Nel SQL Editor di Supabase esegui, sostituendo il nickname:
+Valori attualmente in `config.toml`:
+
+```toml
+[auth]
+site_url = "https://pall1.vercel.app"
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "https://pall1.vercel.app/auth/callback",
+  "https://*-gianmarcos-projects-860f9848.vercel.app/auth/callback",
+]
+[auth.email]
+enable_confirmations = true
+```
+
+Provider: <https://supabase.com/dashboard/project/yivbesunamjxdmbczmda/auth/providers>
+(solo **Email**, nessun OAuth).
+
+### 1.3 Primo amministratore ✅ già creato
+
+L'account **`Sabbia`** (`gianmarco.taf02@gmail.com`) è già amministratore, quindi la
+voce **Gestione** compare subito nell'app.
+
+Gli altri admin si promuovono da `/admin/players`. Se ti serve farlo direttamente dal
+database (SQL Editor di Supabase), sostituendo il nickname:
 
 ```sql
 update public.profiles
 set is_admin = true
-where lower(nickname) = lower('il_tuo_nickname');
+where lower(nickname) = lower('nickname_del_giocatore');
 ```
 
-4. Ricarica l'app: compare la voce **Gestione**.
-
-Da quel momento gli altri admin si promuovono da `/admin/players`.
 Nessuna policy permette a un utente di auto-promuoversi.
 
 ### 1.4 (Consigliato) Ruotare la password del database
