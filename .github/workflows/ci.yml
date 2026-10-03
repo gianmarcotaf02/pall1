@@ -35,6 +35,9 @@ jobs:
       - name: Test unitari
         run: npm test
 
+      - name: Contrasto dei token di colore
+        run: npm run check:contrast
+
       - name: Build
         run: npm run build
         env:

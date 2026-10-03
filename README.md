@@ -204,12 +204,15 @@ src/
 
 Token definiti in `src/app/globals.css` (Tailwind v4, `@theme inline`):
 
-- **Accento unico**: arancio segnale (`oklch(62% 0.17 45)`), usato solo per azioni
+- **Accento unico**: verde campo (`oklch(56% 0.15 147)`), usato solo per azioni
   primarie, stato selezionato e focus.
-- **Neutri tintati** verso l'accento; nessun `#000` né `#fff`, nessun gradiente.
+- **Neutri tintati** di verde verso l'accento; nessun `#000` né `#fff`, nessun gradiente.
 - **Tipografia**: *Instrument Sans* per l'interfaccia, *Archivo* per titoli e numeri
   (`.num`, cifre tabellari). Scala rem fissa.
-- **Semantica**: `win` / `loss` / `draw` solo come indicatori di esito.
+- **Semantica**: `win` (verde bosco, distinto dall'accento) / `loss` (rosso) /
+  `draw` (ambra), sempre accompagnati da lettere `V · P · S`.
+- **Contrasti verificati**: `npm run check:contrast` legge i token da `globals.css` e
+  controlla 16 coppie testo/sfondo per tema.
 - **Stati**: ogni controllo ha hover, focus-visible, active, disabled, loading, error.
 - Tema chiaro/scuro con `prefers-color-scheme` e override manuale in `localStorage`.
 
