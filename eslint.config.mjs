@@ -6,6 +6,7 @@ const eslintConfig = [
     ignores: [
       ".next/**",
       "node_modules/**",
+      "tmp/**",
       "src/types/database.types.ts",
       "next-env.d.ts",
       "playwright-report/**",
