@@ -5,14 +5,15 @@
     centrocampo, arco di rigore, base a tre elementi (area di porta) e
     bandierina staccata da una tacca circolare.
 
-    Nessuna maschera SVG: le marcature del campo sono forme piene del colore
-    del fondo. Una maschera dipende dal fatto che il browser la risolva, e
-    Safari non la applica in modo affidabile nelle favicon o dentro gruppi
+    Nessuna maschera SVG: pallone e marcature del campo sono forme piene color
+    crema, non ritagli. Una maschera dipende dal fatto che il browser la risolva,
+    e Safari non la applica in modo affidabile nelle favicon o dentro gruppi
     trasformati: il risultato sarebbe un quadrato pieno.
 
-    Questa è la versione "positiva", per fondi chiari (carta #eef6ef).
-    Dentro l'app la stessa geometria è in `src/components/brand/logo-mark.tsx`,
-    dove le marcature prendono il colore del tema.
+    Il crema è fisso (in tema scuro le marcature restano chiare, altrimenti il
+    pallone diventa una macchia nera). L'unico "buco" è la tacca che stacca la
+    punta della bandierina: prende il colore della superficie sotto, `--paper`.
+    La stessa geometria è in `src/components/brand/logo-mark.tsx`.
   -->
   <g fill="#09782b">
     <path d="M215 84h136v295H215z"/>
@@ -23,10 +24,10 @@
     <circle cx="137" cy="176" r="40"/>
   </g>
 
-  <g fill="#eef6ef">
-    <!-- tacca che stacca la punta della bandierina -->
-    <circle cx="130" cy="202" r="32"/>
+  <!-- tacca che stacca la punta della bandierina: colore della superficie sotto -->
+  <circle cx="130" cy="202" r="32" fill="var(--paper, #eef6ef)"/>
 
+  <g fill="#f5fcf6">
     <!-- pallone: cinque pannelli attorno al centro -->
     <g transform="translate(258.9 113.6) rotate(145)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>
     <g transform="translate(307.1 113.6) rotate(215)"><path d="M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z"/></g>

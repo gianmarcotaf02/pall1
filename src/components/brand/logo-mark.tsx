@@ -10,11 +10,17 @@
  * dimensioni, e la base a tre pezzi diventa una riga sporca.
  *
  * COME È COSTRUITO — e perché non ci sono mask.
- * Le marcature del campo sono disegnate con il colore del fondo (non
- * ritagliate con una maschera SVG): una maschera richiede che il browser la
- * risolva, e Safari non la applica in modo affidabile quando è dentro un gruppo
- * trasformato o quando l'SVG è usato come favicon. Risultato, in quei casi: un
- * quadrato tutto del colore del marchio. Con le forme piene non può succedere.
+ * Pallone e marcature del campo sono **forme piene color crema**, non ritagli:
+ * una `<mask>` richiede che il browser la risolva, e Safari non la applica in
+ * modo affidabile quando è dentro un gruppo trasformato o quando l'SVG è usato
+ * come favicon. Risultato, in quei casi: un quadrato tutto del colore del
+ * marchio. Con le forme piene non può succedere.
+ *
+ * Il crema è **fisso**, non preso dal tema: se le marcature seguissero il colore
+ * della pagina, in tema scuro il pallone e il cerchio di centrocampo diventano
+ * neri e il marchio sembra bucherellato, non più il logo. L'unico elemento che
+ * deve fondersi con il fondo è la tacca della bandierina, che è un vero "buco"
+ * e quindi usa `var(--paper)`.
  *
  * Le forme dello stesso colore si **sovrappongono** (la bandierina entra nella
  * gamba): due forme che si limitano a toccarsi lasciano una fessura di 1px per
@@ -41,8 +47,9 @@ const PENTAGONS = [
 const PENTAGON_PATH = "M0-22 20.9-6.8 12.9 17.8-12.9 17.8-20.9-6.8z";
 
 /**
- * Colori fissi del tassello dell'icona: il marchio non cambia con il tema,
- * così la tessera in app è identica a favicon e icona PWA.
+ * Colori fissi del marchio: non cambiano con il tema, così la tessera in app è
+ * identica a favicon e icona PWA e le marcature del campo restano leggibili
+ * anche su carta scura.
  */
 const TILE = "#09782b";
 const TILE_MARK = "#f5fcf6";
@@ -92,9 +99,13 @@ export function LogoMark({
             <circle cx={FLAG_TIP.cx} cy={FLAG_TIP.cy} r={FLAG_TIP.r} />
           </g>
 
-          {/* marcature del campo: stesso colore del fondo su cui poggia il marchio */}
-          <g style={{ fill: "var(--paper)" }}>
-            <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} />
+          {/* tacca della bandierina: è un "buco", quindi prende il colore
+              della superficie su cui poggia il marchio */}
+          <circle cx={NOTCH.cx} cy={NOTCH.cy} r={NOTCH.r} style={{ fill: "var(--paper)" }} />
+
+          {/* pallone e marcature del campo: crema fisso, non il colore del
+              fondo, altrimenti in tema scuro si vedono solo dei buchi neri */}
+          <g fill={TILE_MARK}>
             {PENTAGONS.map((panel) => (
               <g
                 key={`${panel.x}-${panel.y}`}

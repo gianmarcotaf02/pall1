@@ -259,22 +259,30 @@ staccata da una tacca.
 
 | File | Uso |
 |---|---|
-| `public/logo.svg` | marchio isolato, `currentColor`, per qualunque fondo |
+| `public/logo.svg` | marchio isolato, colori pieni, pensato per fondo carta chiaro |
 | `src/components/brand/logo-mark.tsx` | lo stesso marchio come componente React |
 | `public/icon.svg` | icona app: tassello verde + marchio crema |
 | `public/icon-maskable.svg` | versione maskable (fondo pieno, marchio entro l'80%) |
 | `public/icons/*.png` | 192 / 512 / apple-touch / maskable, generati |
 
-Le marcature del campo sono **sottrazioni** (una `mask`), non bianco pieno: così il marchio
-regge su fondo chiaro, scuro e a colori.
+Niente `mask` SVG: pallone e marcature del campo sono **forme piene color crema** (`#f5fcf6`),
+non ritagli. Una mask dipende dal fatto che il browser la risolva, e Safari non la applica in
+modo affidabile nelle favicon o dentro gruppi trasformati (risultato: un quadrato pieno).
+
+Il crema delle marcature è **fisso**, non preso dal tema: se seguisse il colore della pagina, in
+tema scuro pallone e cerchio di centrocampo diventerebbero neri e il marchio sembrerebbe
+bucherellato. L'unico elemento che deve fondersi con il fondo è la **tacca della bandierina**,
+che è un vero "buco" e quindi usa `var(--paper)`: per questo il marchio completo va usato su una
+superficie con quel token (le pagine dell'app lo hanno).
 
 ```bash
 npm run logo:preview   # contatta le varie dimensioni su fondo chiaro e scuro
 npm run build:icons    # rigenera i PNG in public/icons/
 ```
 
-> Nota: `public/logo.svg` e `logo-mark.tsx` contengono la stessa geometria. Se cambi l'uno,
-> aggiorna l'altro (il file statico serve per favicon e anteprime, il componente per l'app).
+> Nota: `public/logo.svg`, `public/icon.svg`, `public/icon-maskable.svg` e `logo-mark.tsx`
+> contengono la stessa geometria. Se cambi uno, aggiorna gli altri (i file statici servono per
+> favicon, icone PWA e anteprime; il componente per l'app).
 
 ---
 
