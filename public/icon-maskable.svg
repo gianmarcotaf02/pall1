@@ -24,9 +24,9 @@
     </mask>
   </defs>
 
-  <!-- icona app: tassello verde con il marchio in crema -->
-  <rect width="512" height="512" rx="115" fill="#09782b"/>
-  <g transform="translate(56 56) scale(0.78)">
+  <!-- versione maskable: fondo pieno, marchio entro la zona sicura (80%) -->
+  <rect width="512" height="512" fill="#09782b"/>
+  <g transform="translate(102 102) scale(0.6)">
     <rect width="512" height="512" fill="#f5fcf6" mask="url(#pall1-mark)"/>
   </g>
 </svg>

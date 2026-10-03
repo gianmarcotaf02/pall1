@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "check:contrast": "node scripts/check-contrast.mjs",
+    "build:icons": "node scripts/build-icons.mjs",
+    "logo:preview": "node scripts/render-logo-preview.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

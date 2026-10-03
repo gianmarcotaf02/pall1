@@ -244,6 +244,31 @@ Token definiti in `src/app/globals.css` (Tailwind v4, `@theme inline`):
 - **Stati**: ogni controllo ha hover, focus-visible, active, disabled, loading, error.
 - Tema chiaro/scuro con `prefers-color-scheme` e override manuale in `localStorage`.
 
+### Marchio
+
+Il logo è il numero **1** costruito come un campo da calcio: pallone in alto, linea di metà campo
+con cerchio di centrocampo, arco di rigore, base a tre elementi (area di porta) e bandierina
+staccata da una tacca.
+
+| File | Uso |
+|---|---|
+| `public/logo.svg` | marchio isolato, `currentColor`, per qualunque fondo |
+| `src/components/brand/logo-mark.tsx` | lo stesso marchio come componente React |
+| `public/icon.svg` | icona app: tassello verde + marchio crema |
+| `public/icon-maskable.svg` | versione maskable (fondo pieno, marchio entro l'80%) |
+| `public/icons/*.png` | 192 / 512 / apple-touch / maskable, generati |
+
+Le marcature del campo sono **sottrazioni** (una `mask`), non bianco pieno: così il marchio
+regge su fondo chiaro, scuro e a colori.
+
+```bash
+npm run logo:preview   # contatta le varie dimensioni su fondo chiaro e scuro
+npm run build:icons    # rigenera i PNG in public/icons/
+```
+
+> Nota: `public/logo.svg` e `logo-mark.tsx` contengono la stessa geometria. Se cambi l'uno,
+> aggiorna l'altro (il file statico serve per favicon e anteprime, il componente per l'app).
+
 ---
 
 ## 6. Deploy

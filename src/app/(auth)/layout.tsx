@@ -1,4 +1,4 @@
-import { PitchMark } from "@/components/pitch-mark";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Iscrizioni, formazione delle squadre, risultati e classifica. Un solo posto, niente più
             messaggi persi nella chat.
           </p>
-          <PitchMark className="mt-2 h-36 w-full text-line-strong" />
+          <LogoMark className="mt-2 h-40 w-40 text-accent" title="" />
         </div>
 
         <p className="text-xs text-muted">Solo per il nostro gruppo · accesso su invito</p>
@@ -24,8 +24,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <section className="flex min-h-dvh items-center justify-center px-5 py-12 md:min-h-0 md:px-10">
         <div className="w-full max-w-sm">
-          <span className="mb-8 block font-display text-[20px] font-bold tracking-[-0.03em] text-ink md:hidden">
-            Pall<span className="text-accent-text">1</span>
+          <span className="mb-8 flex items-center gap-2.5 md:hidden">
+            <LogoMark className="size-8" title="" />
+            <span className="font-display text-[20px] font-bold tracking-[-0.03em] text-ink">
+              Pall<span className="text-accent-text">1</span>
+            </span>
           </span>
           {children}
         </div>

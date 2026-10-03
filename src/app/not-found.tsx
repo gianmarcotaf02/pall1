@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
-import { PitchMark } from "@/components/pitch-mark";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { notFoundBody, notFoundTitle } from "@/lib/copy";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh items-center justify-center px-5 py-16">
       <div className="w-full max-w-md space-y-5">
-        <PitchMark className="h-28 w-full text-line-strong" />
+        <LogoMark className="size-20 text-accent" title="" />
         <div className="space-y-2">
           <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-ink">{notFoundTitle()}</h1>
           <p className="text-sm text-muted">{notFoundBody()}</p>
