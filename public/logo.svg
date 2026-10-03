@@ -5,10 +5,10 @@
     centrocampo, arco di rigore, base a tre elementi (area di porta) e
     bandierina staccata da una tacca circolare.
 
-    Nessuna <mask>: le marcature del campo sono forme piene del colore del
-    fondo. Una mask dipende dal fatto che il browser la risolva, e Safari non
-    la applica in modo affidabile nelle favicon o dentro gruppi trasformati:
-    il risultato sarebbe un quadrato pieno.
+    Nessuna maschera SVG: le marcature del campo sono forme piene del colore
+    del fondo. Una maschera dipende dal fatto che il browser la risolva, e
+    Safari non la applica in modo affidabile nelle favicon o dentro gruppi
+    trasformati: il risultato sarebbe un quadrato pieno.
 
     Questa è la versione "positiva", per fondi chiari (carta #eef6ef).
     Dentro l'app la stessa geometria è in `src/components/brand/logo-mark.tsx`,

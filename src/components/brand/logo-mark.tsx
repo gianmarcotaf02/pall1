@@ -10,11 +10,11 @@
  * dimensioni, e la base a tre pezzi diventa una riga sporca.
  *
  * COME È COSTRUITO — e perché non ci sono mask.
- * Le marcature del campo sono disegnate con il colore del fondo (non ritagliate
- * con una `<mask>`): una mask richiede che il browser la risolva, e Safari non
- * la applica in modo affidabile quando è dentro un gruppo trasformato o quando
- * l'SVG è usato come favicon. Risultato, in quei casi: un quadrato tutto del
- * colore del marchio. Con le forme piene questo non può succedere.
+ * Le marcature del campo sono disegnate con il colore del fondo (non
+ * ritagliate con una maschera SVG): una maschera richiede che il browser la
+ * risolva, e Safari non la applica in modo affidabile quando è dentro un gruppo
+ * trasformato o quando l'SVG è usato come favicon. Risultato, in quei casi: un
+ * quadrato tutto del colore del marchio. Con le forme piene non può succedere.
  *
  * Le forme dello stesso colore si **sovrappongono** (la bandierina entra nella
  * gamba): due forme che si limitano a toccarsi lasciano una fessura di 1px per

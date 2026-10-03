@@ -5,9 +5,10 @@
     numero 1 con la sua bandierina, che è la sagoma riconoscibile.
     Il marchio completo vive in `logo.svg`.
 
-    Nessuna <mask>: le marcature sono forme piene del colore del fondo. Una
-    mask dipende dal fatto che il browser la risolva, e Safari non la applica
-    in modo affidabile nelle favicon: il risultato sarebbe un quadrato pieno.
+    Nessuna maschera SVG: le marcature sono forme piene del colore del
+    fondo. Una maschera dipende dal fatto che il browser la risolva, e Safari
+    non la applica in modo affidabile nelle favicon: il risultato sarebbe un
+    quadrato pieno.
 
     Le forme dello stesso colore si sovrappongono (la bandierina entra nella
     gamba): se si limitassero a toccarsi, l'antialiasing lascerebbe una
