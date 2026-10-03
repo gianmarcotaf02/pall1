@@ -8,13 +8,12 @@
  * scrive in `logo-paths.json`). Ridisegnarli a mano aveva prodotto una sagoma
  * che somigliava al riferimento solo da lontano: così invece è la stessa forma.
  *
- * Tre tracciati:
+ * Due livelli:
  *
- * | chiave     | cos'è                                              | colore       |
- * |------------|----------------------------------------------------|--------------|
- * | `hull`     | sagoma piena, marcature comprese                    | `currentColor`|
- * | `markings` | pallone e marcature del campo, sopra la sagoma      | crema         |
- * | `compact`  | sagoma senza base, per icona app e barra in alto    | crema         |
+ * | tracciato  | cos'è                                        | colore         |
+ * |------------|----------------------------------------------|----------------|
+ * | `hull`     | sagoma piena, marcature comprese              | `currentColor` |
+ * | `markings` | pallone e marcature del campo, sopra la sagoma| crema          |
  *
  * La tacca della bandierina è un **vuoto vero** nella sagoma: la punta è un
  * pezzo staccato, quindi lascia vedere il fondo su cui poggia il marchio (carta
@@ -22,30 +21,19 @@
  * marchio non ha bisogno di sapere su che fondo sta, e non usa maschere SVG né
  * forme colorate "a imitazione" del fondo.
  *
- * La variante `compact` (barra in alto, icona app) è la stessa sagoma senza la
- * base: sotto i ~40px pallone e marcature sono spessi 1-2px, e la base a tre
- * pezzi diventa una riga sporca.
+ * Il colore della sagoma è `currentColor`: dove il marchio sta su fondo pagina
+ * va dato `text-accent`, altrimenti eredita il colore del testo (e in tema scuro
+ * esce bianco). Il terzo tracciato del riferimento, `compact` (sagoma senza
+ * base), non è usato qui: serve solo all'icona app, dove a 16-192px pallone e
+ * marcature diventano una macchia.
  */
 
 import paths from "./logo-paths.json";
 
-/**
- * Colori fissi del marchio: non cambiano con il tema, così la tessera in app è
- * identica a favicon e icona PWA e le marcature del campo restano leggibili
- * anche su carta scura.
- */
-const TILE = "#09782b";
+/** Colore fisso delle marcature: non cambia col tema, come nel riferimento. */
 const CREAM = "#f5fcf6";
 
-export function LogoMark({
-  className,
-  title,
-  compact = false,
-}: {
-  className?: string;
-  title?: string;
-  compact?: boolean;
-}) {
+export function LogoMark({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
       viewBox="0 0 512 512"
@@ -56,17 +44,8 @@ export function LogoMark({
       focusable={false}
       className={className}
     >
-      {compact ? (
-        <>
-          <rect width="512" height="512" rx="115" fill={TILE} />
-          <path fill={CREAM} d={paths.compact} />
-        </>
-      ) : (
-        <>
-          <path fill="currentColor" d={paths.hull} />
-          <path fill={CREAM} d={paths.markings} />
-        </>
-      )}
+      <path fill="currentColor" d={paths.hull} />
+      <path fill={CREAM} d={paths.markings} />
     </svg>
   );
 }

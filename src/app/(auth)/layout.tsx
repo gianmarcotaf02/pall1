@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <section className="flex min-h-dvh items-center justify-center px-5 py-12 md:min-h-0 md:px-10">
         <div className="w-full max-w-sm">
           <span className="mb-8 flex items-center gap-2.5 md:hidden">
-            <LogoMark compact className="size-8" title="" />
+            <LogoMark className="size-8 text-accent" title="" />
             <span className="font-display text-[20px] font-bold tracking-[-0.03em] text-ink">
               Pall<span className="text-accent-text">1</span>
             </span>

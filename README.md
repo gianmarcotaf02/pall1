@@ -279,8 +279,13 @@ Come è composto il disegno, e perché così regge su ogni fondo:
 - la **tacca della bandierina** è un vuoto vero nella sagoma (la punta è un pezzo staccato):
   lascia vedere il fondo, come nel riferimento, senza bisogno di maschere SVG né di forme
   colorate "a imitazione" del fondo.
-- `compact` è la sagoma senza la base, per barra in alto e icona app: sotto i ~40px pallone e
-  marcature sono spessi 1-2px e la base a tre pezzi diventa una riga sporca.
+- `compact` è la sagoma senza la base: **non** è usata in app, solo dall'icona app e dalla
+  favicon, dove a 16-192px pallone e marcature diventano una macchia e la base a tre pezzi una
+  riga sporca. Il marchio in pagina (login, home, 404) è sempre quello completo.
+
+Dove il marchio poggia sul fondo pagina serve `text-accent` sul componente: la sagoma è
+`currentColor`, quindi senza quella classe eredita il colore del testo ed esce bianca in tema
+scuro.
 
 ```bash
 npm run logo:trace     # rigenera i tracciati dal riferimento (serve python + potracer)
