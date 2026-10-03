@@ -1,5 +1,5 @@
-import type { Attendance, MatchStatus, PlayerRole } from "@/types/domain";
-import { ATTENDANCE_LABELS, ROLE_LABELS, ROLE_SHORT, STATUS_LABELS } from "@/lib/format";
+import type { Attendance, MatchStatus } from "@/types/domain";
+import { ATTENDANCE_LABELS, STATUS_LABELS } from "@/lib/format";
 
 const CHIP =
   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide";
@@ -38,19 +38,6 @@ export function AttendanceChip({ attendance }: { attendance: Attendance }) {
     <span className={`${CHIP} bg-surface-2 text-muted`}>
       <span className={`size-1.5 rounded-full ${ATTENDANCE_DOT[attendance]}`} aria-hidden />
       {ATTENDANCE_LABELS[attendance]}
-    </span>
-  );
-}
-
-export function RoleTag({ role, muted }: { role: PlayerRole; muted?: boolean }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-[6px] border border-rule px-1.5 py-0.5 text-[11px] font-medium tracking-[0.02em] ${
-        muted ? "text-muted" : "text-ink"
-      }`}
-      title={ROLE_LABELS[role]}
-    >
-      {ROLE_SHORT[role]}
     </span>
   );
 }

@@ -6,10 +6,18 @@ import { adminUpdatePlayerAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FormMessage } from "@/components/ui/form-message";
 import { Avatar } from "@/components/ui/avatar";
-import { ROLE_SHORT } from "@/lib/format";
+import { PositionTags } from "@/components/positions/position-tags";
 import type { Profile } from "@/types/domain";
 
-export function PlayerAdminRow({ player, isSelf }: { player: Profile; isSelf: boolean }) {
+export function PlayerAdminRow({
+  player,
+  isSelf,
+  positions,
+}: {
+  player: Profile;
+  isSelf: boolean;
+  positions: string[];
+}) {
   const [state, action] = useActionState(adminUpdatePlayerAction, null);
 
   return (
@@ -31,10 +39,15 @@ export function PlayerAdminRow({ player, isSelf }: { player: Profile; isSelf: bo
                 </span>
               ) : null}
             </p>
-            <p className="truncate text-[12px] text-muted">
-              {player.full_name ?? "—"}
-              {player.roles.length > 0 ? ` · ${player.roles.map((r) => ROLE_SHORT[r]).join(" ")}` : ""}
-            </p>
+            <p className="truncate text-[12px] text-muted">{player.full_name ?? "—"}</p>
+            <div className="mt-1.5">
+              <PositionTags
+                codes={positions}
+                showFormat
+                max={6}
+                empty="posizioni non indicate"
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">

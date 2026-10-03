@@ -10,7 +10,6 @@ import {
   MAX_AVATAR_BYTES,
   profileSchema,
 } from "@/lib/validation/schemas";
-import type { PlayerRole } from "@/types/domain";
 
 export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const profile = await requireProfile();
@@ -18,8 +17,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   const parsed = profileSchema.safeParse({
     nickname: formData.get("nickname"),
     full_name: formData.get("full_name") ?? "",
-    roles: formData.getAll("roles").map(String),
-    preferred_role: formData.get("preferred_role") ?? "",
+    positions: formData.getAll("positions").map(String),
     jersey_number: formData.get("jersey_number") ?? "",
     birth_date: formData.get("birth_date") ?? "",
   });
@@ -32,17 +30,39 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     .update({
       nickname: parsed.data.nickname,
       full_name: parsed.data.full_name?.trim() ? parsed.data.full_name.trim() : null,
-      roles: parsed.data.roles ?? [],
-      preferred_role:
-        parsed.data.preferred_role && parsed.data.preferred_role !== ""
-          ? (parsed.data.preferred_role as PlayerRole)
-          : null,
       jersey_number: parsed.data.jersey_number === "" ? null : parsed.data.jersey_number,
       birth_date: parsed.data.birth_date === "" ? null : parsed.data.birth_date,
     })
     .eq("id", profile.id);
 
   if (error) return { error: errorMessage(error) };
+
+  // Posizioni preferite: aggiungi le nuove, poi togli quelle deselezionate.
+  // In quest'ordine un errore a metà non fa perdere le preferenze esistenti.
+  const codes = [...new Set(parsed.data.positions ?? [])];
+
+  if (codes.length === 0) {
+    const { error: clearError } = await supabase
+      .from("profile_positions")
+      .delete()
+      .eq("profile_id", profile.id);
+    if (clearError) return { error: errorMessage(clearError) };
+  } else {
+    const { error: insertError } = await supabase
+      .from("profile_positions")
+      .upsert(
+        codes.map((code) => ({ profile_id: profile.id, position_code: code })),
+        { onConflict: "profile_id,position_code", ignoreDuplicates: true },
+      );
+    if (insertError) return { error: errorMessage(insertError) };
+
+    const { error: pruneError } = await supabase
+      .from("profile_positions")
+      .delete()
+      .eq("profile_id", profile.id)
+      .not("position_code", "in", `(${codes.join(",")})`);
+    if (pruneError) return { error: errorMessage(pruneError) };
+  }
 
   revalidatePath("/profile");
   revalidatePath("/players");

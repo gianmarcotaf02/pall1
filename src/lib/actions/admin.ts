@@ -6,7 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { errorMessage, firstIssue } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { fromDatetimeLocalValue } from "@/lib/format";
-import { getRoster } from "@/lib/queries";
+import { positionByCode, roleGroupsOf } from "@/lib/positions";
+import { getMatchById, getRoster } from "@/lib/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   attendanceSchema,
@@ -15,7 +16,7 @@ import {
   resultSchema,
   teamAssignmentSchema,
 } from "@/lib/validation/schemas";
-import type { PlayerRole } from "@/types/domain";
+import type { MatchFormat, PlayerRole, RosterEntry } from "@/types/domain";
 
 function revalidateMatch(matchId: string) {
   revalidatePath("/");
@@ -36,6 +37,7 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
   const admin = await requireAdmin();
 
   const parsed = matchSchema.safeParse({
+    format: formData.get("format"),
     match_date_local: formData.get("match_date_local"),
     location: formData.get("location"),
     max_players: formData.get("max_players"),
@@ -52,6 +54,7 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
   const { data, error } = await supabase
     .from("matches")
     .insert({
+      format: parsed.data.format,
       match_date: matchDate,
       location: parsed.data.location,
       max_players: parsed.data.max_players,
@@ -74,6 +77,7 @@ export async function updateMatchAction(_prev: FormState, formData: FormData): P
   const matchId = String(formData.get("match_id") ?? "");
 
   const parsed = matchSchema.safeParse({
+    format: formData.get("format"),
     match_date_local: formData.get("match_date_local"),
     location: formData.get("location"),
     max_players: formData.get("max_players"),
@@ -90,6 +94,7 @@ export async function updateMatchAction(_prev: FormState, formData: FormData): P
   const { error } = await supabase
     .from("matches")
     .update({
+      format: parsed.data.format,
       match_date: matchDate,
       location: parsed.data.location,
       max_players: parsed.data.max_players,
@@ -211,6 +216,23 @@ const ROLE_PRIORITY: Record<PlayerRole, number> = {
 };
 
 /**
+ * Priorità di un giocatore per il bilanciamento: conta prima le posizioni
+ * preferite **per il formato della partita**, e solo in mancanza ripiega su
+ * tutte le altre.
+ */
+function entryPriority(entry: RosterEntry, format: MatchFormat) {
+  const forFormat = entry.positions.filter(
+    (code) => positionByCode(code)?.format === format,
+  );
+  const groups = roleGroupsOf(forFormat.length > 0 ? forFormat : entry.positions);
+
+  if (groups.length === 0) return { priority: ROLE_PRIORITY.forward, goalkeeper: false };
+
+  const priority = Math.min(...groups.map((group) => ROLE_PRIORITY[group]));
+  return { priority, goalkeeper: groups.includes("goalkeeper") };
+}
+
+/**
  * Bilanciamento automatico: portieri divisi per primi, poi riempimento
  * della squadra con meno giocatori (a parità, alternanza).
  */
@@ -221,13 +243,16 @@ export async function autoBalanceTeamsAction(
   await requireAdmin();
   const matchId = String(formData.get("match_id") ?? "");
 
-  const roster = await getRoster(matchId);
+  const [roster, match] = await Promise.all([getRoster(matchId), getMatchById(matchId)]);
+  if (!match) return { error: "Partita non trovata." };
+
+  const format = match.format;
   const playing = roster
     .filter((entry) => entry.attendance === "present")
     .sort((a, b) => {
-      const roleA = ROLE_PRIORITY[a.roles[0] ?? "forward"];
-      const roleB = ROLE_PRIORITY[b.roles[0] ?? "forward"];
-      if (roleA !== roleB) return roleA - roleB;
+      const left = entryPriority(a, format);
+      const right = entryPriority(b, format);
+      if (left.priority !== right.priority) return left.priority - right.priority;
       return a.nickname.localeCompare(b.nickname);
     });
 
@@ -240,7 +265,7 @@ export async function autoBalanceTeamsAction(
   let alternate = true;
 
   for (const entry of playing) {
-    const isGoalkeeper = entry.roles.includes("goalkeeper");
+    const isGoalkeeper = entryPriority(entry, format).goalkeeper;
     let goesToA: boolean;
 
     if (isGoalkeeper) {

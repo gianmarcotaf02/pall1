@@ -61,7 +61,7 @@ describe("profileSchema", () => {
   const base = {
     nickname: "tafo",
     full_name: "",
-    roles: ["goalkeeper", "defender"],
+    positions: ["5_gk", "8_cb"],
     jersey_number: "",
     birth_date: "",
   };
@@ -82,13 +82,22 @@ describe("profileSchema", () => {
     expect(profileSchema.safeParse({ ...base, jersey_number: "100" }).success).toBe(false);
   });
 
-  it("vuole il ruolo preferito tra quelli selezionati", () => {
-    const invalid = profileSchema.safeParse({ ...base, preferred_role: "forward" });
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) expect(firstIssue(invalid.error)).toMatch(/ruolo preferito/i);
+  it("accetta posizioni del catalogo su formati diversi", () => {
+    const parsed = profileSchema.parse({
+      ...base,
+      positions: ["5_gk", "5_lat_r", "11_cb_l"],
+    });
+    expect(parsed.positions).toEqual(["5_gk", "5_lat_r", "11_cb_l"]);
+  });
 
-    const valid = profileSchema.safeParse({ ...base, preferred_role: "defender" });
-    expect(valid.success).toBe(true);
+  it("rifiuta posizioni inventate", () => {
+    const result = profileSchema.safeParse({ ...base, positions: ["8_gk", "portiere"] });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(firstIssue(result.error)).toMatch(/posizione/i);
+  });
+
+  it("accetta un profilo senza posizioni", () => {
+    expect(profileSchema.safeParse({ ...base, positions: [] }).success).toBe(true);
   });
 
   it("rifiuta date non valide", () => {
@@ -97,25 +106,39 @@ describe("profileSchema", () => {
 });
 
 describe("matchSchema", () => {
+  const base = {
+    format: "eight_a_side",
+    match_date_local: "2026-06-15T21:00",
+    location: "Campo Nord",
+    max_players: "12",
+    team_a_name: "Squadra A",
+    team_b_name: "Squadra B",
+  };
+
   it("coercizza max_players e applica i default dei nomi squadra", () => {
-    const parsed = matchSchema.parse({
-      match_date_local: "2026-06-15T21:00",
-      location: "Campo Nord",
-      max_players: "12",
-      team_a_name: "Squadra A",
-      team_b_name: "Squadra B",
-    });
+    const parsed = matchSchema.parse(base);
     expect(parsed.max_players).toBe(12);
+    expect(parsed.format).toBe("eight_a_side");
+  });
+
+  it("accetta tutti i formati", () => {
+    for (const format of ["five_a_side", "eight_a_side", "eleven_a_side"] as const) {
+      expect(matchSchema.safeParse({ ...base, format }).success).toBe(true);
+    }
+  });
+
+  it("rifiuta un formato sconosciuto", () => {
+    expect(matchSchema.safeParse({ ...base, format: "beach_soccer" }).success).toBe(false);
+  });
+
+  it("richiede il formato", () => {
+    const { format, ...withoutFormat } = base;
+    void format;
+    expect(matchSchema.safeParse(withoutFormat).success).toBe(false);
   });
 
   it("rifiuta un numero di posti fuori range", () => {
-    const result = matchSchema.safeParse({
-      match_date_local: "2026-06-15T21:00",
-      location: "Campo Nord",
-      max_players: "1",
-      team_a_name: "A",
-      team_b_name: "B",
-    });
+    const result = matchSchema.safeParse({ ...base, max_players: "1" });
     expect(result.success).toBe(false);
   });
 });

@@ -183,6 +183,55 @@ try {
     teamsSet.error?.message,
   );
 
+  /* ---------------- Posizioni ---------------- */
+
+  console.log("\nPosizioni e formati");
+  const catalog = await playerClient.from("positions").select("code, format");
+  check("il catalogo posizioni è leggibile", (catalog.data ?? []).length >= 20, catalog.error?.message);
+  check(
+    "il catalogo copre i tre formati",
+    new Set((catalog.data ?? []).map((row) => row.format)).size === 3,
+  );
+
+  const foreignCatalogWrite = await playerClient
+    .from("positions")
+    .insert({ code: "x_fake", format: "five_a_side", label: "Finta", short_label: "XX", role_group: "defender", x: 0.5, y: 0.5 })
+    .select("code");
+  check(
+    "il catalogo non si scrive dall'app",
+    (foreignCatalogWrite.data ?? []).length === 0,
+    foreignCatalogWrite.error?.message,
+  );
+
+  const ownPositions = await playerClient
+    .from("profile_positions")
+    .insert([
+      { profile_id: player.id, position_code: "8_gk" },
+      { profile_id: player.id, position_code: "5_lat_r" },
+    ])
+    .select("position_code");
+  check(
+    "si scelgono le proprie posizioni",
+    (ownPositions.data ?? []).length === 2,
+    ownPositions.error?.message,
+  );
+
+  const foreignPositions = await otherClient
+    .from("profile_positions")
+    .insert({ profile_id: player.id, position_code: "11_st" })
+    .select("position_code");
+  check(
+    "non si scelgono le posizioni di un altro",
+    (foreignPositions.data ?? []).length === 0,
+    foreignPositions.error?.message,
+  );
+
+  const cachedPositions = await otherClient.from("profile_positions").select("profile_id");
+  check("tutti vedono le posizioni dei compagni", (cachedPositions.data ?? []).length >= 2);
+
+  const matchFormat = await admin.from("matches").select("format").eq("id", match.id).single();
+  check("la partita ha un formato", matchFormat.data?.format === "eight_a_side", matchFormat.data?.format);
+
   /* ---------------- Sondaggi ---------------- */
 
   console.log("\nSondaggi");

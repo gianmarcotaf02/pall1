@@ -9,6 +9,7 @@ import { AttendanceChip, StatusChip } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/button";
 import { requireProfile } from "@/lib/auth";
+import { FORMAT_SHORT, positionByCode, roleGroupsOf } from "@/lib/positions";
 import { formatMatchDate, ROLE_ORDER } from "@/lib/format";
 import { getMatchDetail } from "@/lib/queries";
 import { IconArrowLeft, IconPin } from "@/components/icons";
@@ -50,7 +51,18 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const teamB = roster.filter((entry) => entry.team === "b");
   const unassigned = roster
     .filter((entry) => entry.team === null && entry.attendance !== "absent")
-    .sort((a, b) => ROLE_ORDER.indexOf(a.roles[0] ?? "forward") - ROLE_ORDER.indexOf(b.roles[0] ?? "forward"));
+    .sort((a, b) => {
+      const groupsA = roleGroupsOf(
+        a.positions.filter((code) => positionByCode(code)?.format === match.format),
+      );
+      const groupsB = roleGroupsOf(
+        b.positions.filter((code) => positionByCode(code)?.format === match.format),
+      );
+      const left = groupsA.length > 0 ? ROLE_ORDER.indexOf(groupsA[0]) : ROLE_ORDER.length;
+      const right = groupsB.length > 0 ? ROLE_ORDER.indexOf(groupsB[0]) : ROLE_ORDER.length;
+      if (left !== right) return left - right;
+      return a.nickname.localeCompare(b.nickname);
+    });
   const teamsFormed = teamA.length > 0 || teamB.length > 0;
 
   return (
@@ -70,6 +82,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               <IconPin className="size-4" />
               {match.location}
             </span>
+            <span className="num">{FORMAT_SHORT[match.format]}</span>
           </span>
         }
         action={<StatusChip status={match.status} />}
@@ -137,11 +150,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           <TeamColumn
             name={match.team_a_name}
             entries={teamA}
+            format={match.format}
             showContributions={match.status === "played"}
           />
           <TeamColumn
             name={match.team_b_name}
             entries={teamB}
+            format={match.format}
             showContributions={match.status === "played"}
           />
         </div>

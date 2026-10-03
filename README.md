@@ -20,8 +20,11 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 - **Sondaggi** (stile WhatsApp): domanda + opzioni, a scelta singola o multipla, con **chi ha
   votato cosa visibile a tutti**; chiudi, riapri o elimina i tuoi. Le opzioni possono portare una
   data e ora, così l'admin crea la partita con un click.
+- **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
+  Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
+  (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
 - **Statistiche:** classifica e tabella per giocatore, calcolate in SQL.
-- **Profilo:** nickname unico, ruoli multipli con preferito, numero di maglia, avatar.
+- **Profilo:** nickname unico, posizioni preferite per formato, numero di maglia, avatar.
 
 ---
 
@@ -166,6 +169,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_storage_avatars` | bucket `avatars` + policy |
 | `…_polls` | `polls`, `poll_options`, `poll_votes` + trigger + RLS |
 | `…_poll_options_sort_order` | rinomina `position` → `sort_order` (parola riservata SQL + attrito PostgREST) |
+| `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
 
 ```bash
 supabase link --project-ref yivbesunamjxdmbczmda
@@ -188,6 +192,8 @@ npm run gen:types         # rigenera i tipi TypeScript
   tutti vedono chi ha votato cosa; domanda e tipo di voto non si modificano dopo la creazione
   (invaliderebbero i voti); l'autore o un admin chiude e cancella.
 - Un sondaggio a scelta singola sostituisce automaticamente il voto precedente (trigger).
+- **Posizioni:** il catalogo `positions` è di sola lettura dall'app; ognuno scrive solo le proprie
+  `profile_positions`, tutti le vedono.
 
 ---
 
@@ -205,6 +211,7 @@ src/
 ├─ components/
 │  ├─ ui/              primitive: button, field, badge, avatar, empty state
 │  ├─ match/           pannello partita, controllo presenza
+│  ├─ positions/       campo 2D, selettore posizioni, pastiglie
 │  ├─ polls/           card, risultati cliccabili, form di creazione
 │  ├─ admin/           form e pannelli di gestione
 │  └─ …
@@ -212,6 +219,7 @@ src/
 │  ├─ actions/         Server Actions (auth, profilo, iscrizioni, sondaggi, admin)
 │  ├─ supabase/        client server-side + refresh in proxy
 │  ├─ queries.ts       letture tipizzate
+│  ├─ positions.ts     catalogo posizioni + coordinate (rispecchia la tabella `positions`)
 │  ├─ validation/      schemi Zod
 │  └─ errors.ts        traduzione errori Postgres/trigger in italiano
 ├─ proxy.ts            refresh sessione + guardia rotte (ex middleware)
@@ -255,10 +263,12 @@ richiederebbero il login a Vercel anche per gli amici.
 
 ## 7. Test
 
-- **Unitari** (`npm test`): schemi Zod, traduzione errori, conversioni di fuso orario.
+- **Unitari** (`npm test`): schemi Zod, traduzione errori, conversioni di fuso orario e
+  **coerenza del catalogo posizioni** con la migrazione SQL (codici, etichette, coordinate,
+  e nessun pallino sovrapposto sul campo).
 - **RLS** (`npm run test:rls`): crea utenti di prova con la service role key e verifica
-  con la anon key che letture e scritture siano davvero limitate (23 controlli, sondaggi
-  inclusi). Pulizia automatica.
+  con la anon key che letture e scritture siano davvero limitate (30 controlli: partite,
+  iscrizioni, sondaggi, posizioni). Pulizia automatica.
 - **E2E** (`npm run test:e2e`): flussi di accesso su viewport mobile e desktop.
 
 I test RLS sono la rete di sicurezza più importante: se una policy si allenta, se ne

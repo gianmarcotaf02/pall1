@@ -1,6 +1,7 @@
 import type { Database } from "@/types/database.types";
 
 export type MatchStatus = Database["public"]["Enums"]["match_status"];
+export type MatchFormat = Database["public"]["Enums"]["match_format"];
 export type PlayerRole = Database["public"]["Enums"]["player_role"];
 export type Attendance = Database["public"]["Enums"]["attendance_status"];
 export type TeamSide = Database["public"]["Enums"]["team_side"];
@@ -21,6 +22,7 @@ export type MatchListItem = {
   location: string;
   max_players: number;
   status: MatchStatus;
+  format: MatchFormat;
   team_a_name: string;
   team_b_name: string;
   present_count: number;
@@ -35,8 +37,9 @@ export type RosterEntry = {
   fullName: string | null;
   avatarUrl: string | null;
   jerseyNumber: number | null;
-  roles: PlayerRole[];
   isActive: boolean;
+  /** Codici delle posizioni preferite (tutti i formati). */
+  positions: string[];
   attendance: Attendance;
   team: TeamSide | null;
   goals: number;

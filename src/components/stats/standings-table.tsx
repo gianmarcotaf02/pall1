@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { ROLE_SHORT } from "@/lib/format";
 import type { StandingRow } from "@/types/domain";
 
 export function StandingsTable({
   rows,
   limit,
   compact = false,
+  subtitleById,
 }: {
   rows: StandingRow[];
   limit?: number;
   compact?: boolean;
+  subtitleById?: Map<string, string>;
 }) {
   const visible = limit ? rows.slice(0, limit) : rows;
 
@@ -74,9 +75,7 @@ export function StandingsTable({
                       {row.nickname ?? "—"}
                     </span>
                     <span className="block truncate text-[11px] text-muted">
-                      {(row.roles ?? []).length > 0
-                        ? (row.roles ?? []).map((role) => ROLE_SHORT[role]).join(" · ")
-                        : "Ruolo da definire"}
+                      {subtitleById?.get(row.id ?? "") || "Posizioni da definire"}
                       {row.is_active ? "" : " · inattivo"}
                     </span>
                   </span>

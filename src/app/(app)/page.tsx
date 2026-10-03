@@ -12,10 +12,12 @@ import {
   listMatches,
   listPlayerStats,
   listPolls,
+  listProfilePositions,
   listProfiles,
   listStandings,
   splitMatches,
 } from "@/lib/queries";
+import { shortSummary } from "@/lib/positions";
 
 export default async function DashboardPage() {
   const profile = await requireProfile();
@@ -25,12 +27,19 @@ export default async function DashboardPage() {
   const next = upcoming[0] ?? null;
   const myAttendance = next ? await getMyAttendance(next.id, profile.id) : null;
 
-  const [standings, stats, players, polls] = await Promise.all([
+  const [standings, stats, players, polls, positionsByProfile] = await Promise.all([
     listStandings(),
     listPlayerStats(),
     listProfiles(),
     listPolls(profile.id),
+    listProfilePositions(),
   ]);
+
+  const subtitleById = new Map(
+    standings
+      .filter((row) => row.id !== null)
+      .map((row) => [row.id as string, shortSummary(positionsByProfile.get(row.id as string) ?? [])]),
+  );
 
   const openPolls = polls.filter((poll) => !poll.closed);
 
@@ -107,7 +116,7 @@ export default async function DashboardPage() {
           </SectionTitle>
 
           {standings.length > 0 ? (
-            <StandingsTable rows={standings} limit={5} compact />
+            <StandingsTable rows={standings} limit={5} compact subtitleById={subtitleById} />
           ) : (
             <EmptyState
               title="Classifica ancora vuota"

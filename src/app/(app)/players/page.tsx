@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { Avatar } from "@/components/ui/avatar";
-import { JerseyNumber, RoleTag } from "@/components/ui/badge";
+import { JerseyNumber } from "@/components/ui/badge";
+import { PositionTags } from "@/components/positions/position-tags";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireProfile } from "@/lib/auth";
-import { ageFrom, ROLE_LABELS, ROLE_ORDER } from "@/lib/format";
-import { listProfiles, listStandings } from "@/lib/queries";
+import { ageFrom } from "@/lib/format";
+import { listProfilePositions, listProfiles, listStandings } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Giocatori" };
 
 export default async function PlayersPage() {
   await requireProfile();
-  const [players, standings] = await Promise.all([listProfiles(), listStandings()]);
-  const statsById = new Map(standings.map((row) => [row.id, row]));
 
+  const [players, standings, positionsByProfile] = await Promise.all([
+    listProfiles(),
+    listStandings(),
+    listProfilePositions(),
+  ]);
+
+  const statsById = new Map(standings.map((row) => [row.id, row]));
   const active = players.filter((p) => p.is_active);
   const inactive = players.filter((p) => !p.is_active);
 
@@ -25,6 +31,8 @@ export default async function PlayersPage() {
         {active.map((player) => {
           const stats = statsById.get(player.id);
           const age = ageFrom(player.birth_date);
+          const positions = positionsByProfile.get(player.id) ?? [];
+
           return (
             <a
               key={player.id}
@@ -44,15 +52,13 @@ export default async function PlayersPage() {
                   {age !== null ? ` · ${age} anni` : ""}
                 </p>
 
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {player.roles.length > 0 ? (
-                    player.roles
-                      .slice()
-                      .sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b))
-                      .map((role) => <RoleTag key={role} role={role} />)
-                  ) : (
-                    <span className="text-[11.5px] text-muted">Ruolo da definire</span>
-                  )}
+                <div className="mt-2">
+                  <PositionTags
+                    codes={positions}
+                    showFormat
+                    max={5}
+                    empty="Posizioni da definire"
+                  />
                 </div>
 
                 <p className="mt-2.5 text-[12px] text-muted">
@@ -93,11 +99,6 @@ export default async function PlayersPage() {
           </ul>
         </section>
       ) : null}
-
-      <p className="mt-6 text-[11.5px] text-muted">
-        Ruoli:{" "}
-        {ROLE_ORDER.map((role) => ROLE_LABELS[role]).join(" · ")}
-      </p>
     </>
   );
 }

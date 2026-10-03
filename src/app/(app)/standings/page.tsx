@@ -3,13 +3,20 @@ import { PageHeader } from "@/components/page-header";
 import { StandingsTable } from "@/components/stats/standings-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireProfile } from "@/lib/auth";
-import { listStandings } from "@/lib/queries";
+import { shortSummary } from "@/lib/positions";
+import { listProfilePositions, listStandings } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Classifica" };
 
 export default async function StandingsPage() {
   await requireProfile();
-  const rows = await listStandings();
+  const [rows, positionsByProfile] = await Promise.all([listStandings(), listProfilePositions()]);
+
+  const subtitleById = new Map(
+    rows
+      .filter((row) => row.id !== null)
+      .map((row) => [row.id as string, shortSummary(positionsByProfile.get(row.id as string) ?? [])]),
+  );
 
   return (
     <>
@@ -19,7 +26,7 @@ export default async function StandingsPage() {
       />
 
       {rows.length > 0 ? (
-        <StandingsTable rows={rows} />
+        <StandingsTable rows={rows} subtitleById={subtitleById} />
       ) : (
         <EmptyState
           title="Classifica vuota"

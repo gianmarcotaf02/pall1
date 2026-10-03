@@ -4,13 +4,17 @@ import { PageHeader } from "@/components/page-header";
 import { PlayerAdminRow } from "@/components/admin/player-admin-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdmin } from "@/lib/auth";
-import { listProfiles, listPlayerStats } from "@/lib/queries";
+import { listProfilePositions, listProfiles, listPlayerStats } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Giocatori · Gestione" };
 
 export default async function AdminPlayersPage() {
   const admin = await requireAdmin();
-  const [players, stats] = await Promise.all([listProfiles(), listPlayerStats()]);
+  const [players, stats, positionsByProfile] = await Promise.all([
+    listProfiles(),
+    listPlayerStats(),
+    listProfilePositions(),
+  ]);
   const statsById = new Map(stats.map((row) => [row.profile_id, row]));
 
   const active = players.filter((player) => player.is_active);
@@ -33,7 +37,12 @@ export default async function AdminPlayersPage() {
         {active.length > 0 ? (
           <ul className="divide-y divide-rule overflow-hidden rounded-card border border-rule bg-surface">
             {active.map((player) => (
-              <PlayerAdminRow key={player.id} player={player} isSelf={player.id === admin.id} />
+              <PlayerAdminRow
+                key={player.id}
+                player={player}
+                isSelf={player.id === admin.id}
+                positions={positionsByProfile.get(player.id) ?? []}
+              />
             ))}
           </ul>
         ) : (
@@ -46,7 +55,12 @@ export default async function AdminPlayersPage() {
           <h2 className="mb-3 text-[13px] font-semibold text-muted">Non attivi ({inactive.length})</h2>
           <ul className="divide-y divide-rule overflow-hidden rounded-card border border-rule bg-surface">
             {inactive.map((player) => (
-              <PlayerAdminRow key={player.id} player={player} isSelf={player.id === admin.id} />
+              <PlayerAdminRow
+                key={player.id}
+                player={player}
+                isSelf={player.id === admin.id}
+                positions={positionsByProfile.get(player.id) ?? []}
+              />
             ))}
           </ul>
         </section>

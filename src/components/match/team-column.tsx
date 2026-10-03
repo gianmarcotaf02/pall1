@@ -1,13 +1,15 @@
-import { AttendanceChip, RoleTag } from "@/components/ui/badge";
+import { AttendanceChip } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { ROLE_ORDER } from "@/lib/format";
-import type { RosterEntry } from "@/types/domain";
+import { PositionTags } from "@/components/positions/position-tags";
+import type { MatchFormat, RosterEntry } from "@/types/domain";
 
 export function PlayerLine({
   entry,
+  format,
   showContributions = false,
 }: {
   entry: RosterEntry;
+  format: MatchFormat;
   showContributions?: boolean;
 }) {
   return (
@@ -22,29 +24,19 @@ export function PlayerLine({
           ) : null}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          {entry.roles.length > 0 ? (
-            entry.roles
-              .slice()
-              .sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b))
-              .map((role) => <RoleTag key={role} role={role} muted />)
-          ) : (
-            <AttendanceChip attendance={entry.attendance} />
-          )}
+          <PositionTags codes={entry.positions} format={format} />
+          {entry.positions.length === 0 ? <AttendanceChip attendance={entry.attendance} /> : null}
         </div>
       </div>
 
-      {showContributions ? (
-        <div className="flex items-center gap-3 text-[12px] text-muted">
-          {(entry.goals > 0 || entry.assists > 0) && (
-            <>
-              <span className="num font-semibold text-ink" title="Gol">
-                {entry.goals} <span className="font-normal text-muted">gol</span>
-              </span>
-              <span className="num font-semibold text-ink" title="Assist">
-                {entry.assists} <span className="font-normal text-muted">ass</span>
-              </span>
-            </>
-          )}
+      {showContributions && (entry.goals > 0 || entry.assists > 0) ? (
+        <div className="flex shrink-0 items-center gap-3 text-[12px] text-muted">
+          <span className="num font-semibold text-ink" title="Gol">
+            {entry.goals} <span className="font-normal text-muted">gol</span>
+          </span>
+          <span className="num font-semibold text-ink" title="Assist">
+            {entry.assists} <span className="font-normal text-muted">ass</span>
+          </span>
         </div>
       ) : null}
     </li>
@@ -54,10 +46,12 @@ export function PlayerLine({
 export function TeamColumn({
   name,
   entries,
+  format,
   showContributions,
 }: {
   name: string;
   entries: RosterEntry[];
+  format: MatchFormat;
   showContributions?: boolean;
 }) {
   return (
@@ -69,7 +63,12 @@ export function TeamColumn({
       {entries.length > 0 ? (
         <ul className="mt-1 divide-y divide-rule/70">
           {entries.map((entry) => (
-            <PlayerLine key={entry.matchPlayerId} entry={entry} showContributions={showContributions} />
+            <PlayerLine
+              key={entry.matchPlayerId}
+              entry={entry}
+              format={format}
+              showContributions={showContributions}
+            />
           ))}
         </ul>
       ) : (

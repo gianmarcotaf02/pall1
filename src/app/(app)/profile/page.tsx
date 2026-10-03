@@ -6,12 +6,18 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { requireProfile } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions/auth";
+import { getPositionsByProfile } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Il tuo profilo" };
 
 export default async function ProfilePage() {
   const profile = await requireProfile();
-  const user = await getCurrentUser();
+  const [user, positionsByProfile] = await Promise.all([
+    getCurrentUser(),
+    getPositionsByProfile([profile.id]),
+  ]);
+
+  const positions = positionsByProfile.get(profile.id) ?? [];
 
   return (
     <>
@@ -27,7 +33,7 @@ export default async function ProfilePage() {
 
       <section className="mt-6 rounded-card border border-rule bg-surface p-5 md:p-6">
         <h2 className="mb-5 text-[15px] font-semibold text-ink">Dati giocatore</h2>
-        <ProfileForm profile={profile} />
+        <ProfileForm profile={profile} positions={positions} />
       </section>
 
       <section className="mt-6 rounded-card border border-rule bg-surface p-5 md:p-6">

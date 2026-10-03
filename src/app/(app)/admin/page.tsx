@@ -6,19 +6,25 @@ import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { StatCell } from "@/components/admin/stat-cell";
 import { buttonClass } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/auth";
-import { listMatches, listProfiles, matchesToClose, splitMatches } from "@/lib/queries";
+import { listMatches, listProfilePositions, listProfiles, matchesToClose, splitMatches } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Gestione" };
 
 export default async function AdminHomePage() {
   await requireAdmin();
 
-  const [matches, players] = await Promise.all([listMatches(), listProfiles()]);
+  const [matches, players, positionsByProfile] = await Promise.all([
+    listMatches(),
+    listProfiles(),
+    listProfilePositions(),
+  ]);
   const { upcoming } = splitMatches(matches);
 
   const activePlayers = players.filter((player) => player.is_active).length;
   const toClose = matchesToClose(matches);
-  const withoutRole = players.filter((player) => player.is_active && player.roles.length === 0).length;
+  const withoutPositions = players.filter(
+    (player) => player.is_active && (positionsByProfile.get(player.id) ?? []).length === 0,
+  ).length;
 
   return (
     <>
@@ -36,7 +42,7 @@ export default async function AdminHomePage() {
         <StatCell label="In programma" value={upcoming.length} />
         <StatCell label="Giocatori attivi" value={activePlayers} />
         <StatCell label="Da chiudere" value={toClose.length} tone={toClose.length > 0 ? "text-accent-text" : undefined} />
-        <StatCell label="Senza ruolo" value={withoutRole} tone={withoutRole > 0 ? "text-accent-text" : undefined} />
+        <StatCell label="Senza ruolo" value={withoutPositions} tone={withoutPositions > 0 ? "text-accent-text" : undefined} />
       </div>
 
       <section className="mt-8">

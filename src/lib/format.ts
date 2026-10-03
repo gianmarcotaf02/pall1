@@ -145,20 +145,6 @@ export function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export const ROLE_LABELS: Record<PlayerRole, string> = {
-  goalkeeper: "Portiere",
-  defender: "Difensore",
-  midfielder: "Centrocampista",
-  forward: "Attaccante",
-};
-
-export const ROLE_SHORT: Record<PlayerRole, string> = {
-  goalkeeper: "POR",
-  defender: "DIF",
-  midfielder: "CEN",
-  forward: "ATT",
-};
-
 export const ROLE_ORDER: PlayerRole[] = ["goalkeeper", "defender", "midfielder", "forward"];
 
 export const ATTENDANCE_LABELS: Record<Attendance, string> = {

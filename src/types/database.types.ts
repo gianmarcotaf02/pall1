@@ -167,6 +167,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          format: Database["public"]["Enums"]["match_format"]
           id: string
           location: string
           match_date: string
@@ -180,6 +181,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          format?: Database["public"]["Enums"]["match_format"]
           id?: string
           location: string
           match_date: string
@@ -193,6 +195,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          format?: Database["public"]["Enums"]["match_format"]
           id?: string
           location?: string
           match_date?: string
@@ -352,6 +355,79 @@ export type Database = {
           },
         ]
       }
+      positions: {
+        Row: {
+          code: string
+          format: Database["public"]["Enums"]["match_format"]
+          label: string
+          role_group: Database["public"]["Enums"]["player_role"]
+          short_label: string
+          sort_order: number
+          x: number
+          y: number
+        }
+        Insert: {
+          code: string
+          format: Database["public"]["Enums"]["match_format"]
+          label: string
+          role_group: Database["public"]["Enums"]["player_role"]
+          short_label: string
+          sort_order?: number
+          x: number
+          y: number
+        }
+        Update: {
+          code?: string
+          format?: Database["public"]["Enums"]["match_format"]
+          label?: string
+          role_group?: Database["public"]["Enums"]["player_role"]
+          short_label?: string
+          sort_order?: number
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
+      profile_positions: {
+        Row: {
+          created_at: string
+          position_code: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          position_code: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          position_code?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_positions_position_code_fkey"
+            columns: ["position_code"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "profile_positions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_positions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "standings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -364,8 +440,6 @@ export type Database = {
           jersey_number: number | null
           nickname: string
           notes: string | null
-          preferred_role: Database["public"]["Enums"]["player_role"] | null
-          roles: Database["public"]["Enums"]["player_role"][]
           updated_at: string
         }
         Insert: {
@@ -379,8 +453,6 @@ export type Database = {
           jersey_number?: number | null
           nickname: string
           notes?: string | null
-          preferred_role?: Database["public"]["Enums"]["player_role"] | null
-          roles?: Database["public"]["Enums"]["player_role"][]
           updated_at?: string
         }
         Update: {
@@ -394,8 +466,6 @@ export type Database = {
           jersey_number?: number | null
           nickname?: string
           notes?: string | null
-          preferred_role?: Database["public"]["Enums"]["player_role"] | null
-          roles?: Database["public"]["Enums"]["player_role"][]
           updated_at?: string
         }
         Relationships: []
@@ -445,8 +515,6 @@ export type Database = {
           losses: number | null
           matches_played: number | null
           nickname: string | null
-          preferred_role: Database["public"]["Enums"]["player_role"] | null
-          roles: Database["public"]["Enums"]["player_role"][] | null
           win_rate: number | null
           wins: number | null
         }
@@ -458,6 +526,7 @@ export type Database = {
     }
     Enums: {
       attendance_status: "present" | "absent" | "maybe"
+      match_format: "five_a_side" | "eight_a_side" | "eleven_a_side"
       match_status: "scheduled" | "teams_set" | "played" | "cancelled"
       player_role: "goalkeeper" | "defender" | "midfielder" | "forward"
       team_side: "a" | "b"
@@ -592,6 +661,7 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["present", "absent", "maybe"],
+      match_format: ["five_a_side", "eight_a_side", "eleven_a_side"],
       match_status: ["scheduled", "teams_set", "played", "cancelled"],
       player_role: ["goalkeeper", "defender", "midfielder", "forward"],
       team_side: ["a", "b"],

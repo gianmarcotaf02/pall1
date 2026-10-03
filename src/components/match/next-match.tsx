@@ -3,6 +3,7 @@ import { AttendanceControl } from "@/components/match/attendance-control";
 import { CapacityBar } from "@/components/match/match-row";
 import { StatusChip } from "@/components/ui/badge";
 import { humanDay, formatTime } from "@/lib/format";
+import { FORMAT_LABELS } from "@/lib/positions";
 import { IconChevronRight, IconPin } from "@/components/icons";
 import type { Attendance, MatchListItem } from "@/types/domain";
 
@@ -27,6 +28,7 @@ export function NextMatchPanel({
             <IconPin className="size-4 shrink-0" />
             <span className="truncate">{match.location}</span>
           </p>
+          <p className="mt-1 text-[12.5px] text-muted">{FORMAT_LABELS[match.format]}</p>
         </div>
         <StatusChip status={match.status} />
       </div>

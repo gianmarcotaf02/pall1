@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusChip } from "@/components/ui/badge";
 import { humanDay, formatTime } from "@/lib/format";
+import { FORMAT_SHORT } from "@/lib/positions";
 import { IconPin } from "@/components/icons";
 import type { MatchListItem } from "@/types/domain";
 
@@ -52,6 +53,7 @@ export function MatchRow({ match }: { match: MatchListItem }) {
         <p className="mt-0.5 flex items-center gap-1.5 truncate text-[12.5px] text-muted">
           <IconPin className="size-3.5 shrink-0" />
           <span className="truncate">{match.location}</span>
+          <span className="num shrink-0">· {FORMAT_SHORT[match.format]}</span>
         </p>
       </div>
 

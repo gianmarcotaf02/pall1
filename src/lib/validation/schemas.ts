@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { PlayerRole } from "@/types/domain";
+import { POSITION_CODES } from "@/lib/positions";
 
-export const ROLES = ["goalkeeper", "defender", "midfielder", "forward"] as const;
-export const roleEnum = z.enum(ROLES);
+export const FORMATS = ["five_a_side", "eight_a_side", "eleven_a_side"] as const;
+export const formatEnum = z.enum(FORMATS);
 
 export const nicknameSchema = z
   .string()
@@ -53,8 +53,14 @@ export const profileSchema = z
   .object({
     nickname: nicknameSchema,
     full_name: z.string().trim().max(80, "Massimo 80 caratteri.").optional(),
-    roles: z.array(roleEnum).max(4).optional(),
-    preferred_role: z.string().optional(),
+    positions: z
+      .array(z.string())
+      .max(40, "Troppe posizioni selezionate.")
+      .optional()
+      .refine(
+        (codes) => (codes ?? []).every((code) => POSITION_CODES.has(code)),
+        "Posizione non riconosciuta.",
+      ),
     jersey_number: z.union([
       z.coerce
         .number()
@@ -64,19 +70,10 @@ export const profileSchema = z
       z.literal(""),
     ]),
     birth_date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data di nascita non valida."), z.literal("")]),
-  })
-  .superRefine((data, ctx) => {
-    const preferred = data.preferred_role;
-    if (preferred && preferred !== "" && !(data.roles ?? []).includes(preferred as PlayerRole)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["preferred_role"],
-        message: "Il ruolo preferito deve essere tra i ruoli selezionati.",
-      });
-    }
   });
 
 export const matchSchema = z.object({
+  format: formatEnum,
   match_date_local: z.string().min(1, "Indica data e ora della partita."),
   location: z.string().trim().min(2, "Indica il campo.").max(120, "Massimo 120 caratteri."),
   max_players: z.coerce

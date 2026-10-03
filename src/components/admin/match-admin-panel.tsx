@@ -16,9 +16,10 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FormMessage } from "@/components/ui/form-message";
 import { StatusChip } from "@/components/ui/badge";
+import { PositionTags } from "@/components/positions/position-tags";
 import { IconScale } from "@/components/icons";
-import { ROLE_SHORT } from "@/lib/format";
-import type { Attendance, MatchResultRow, MatchRow, Profile, RosterEntry, TeamSide } from "@/types/domain";
+import { FORMAT_LABELS, FORMAT_SHORT, MATCH_FORMATS } from "@/lib/positions";
+import type { Attendance, MatchFormat, MatchResultRow, MatchRow, Profile, RosterEntry, TeamSide } from "@/types/domain";
 
 const SEGMENT_BASE =
   "rounded-[7px] px-2.5 py-1.5 text-[12px] font-medium transition-colors duration-150 disabled:opacity-50";
@@ -64,6 +65,7 @@ function RosterRow({
   profile,
   entry,
   matchId,
+  format,
   attendanceAction,
   teamAction,
   locked,
@@ -72,6 +74,7 @@ function RosterRow({
   profile: Profile;
   entry: RosterEntry | undefined;
   matchId: string;
+  format: MatchFormat;
   attendanceAction: (formData: FormData) => void;
   teamAction: (formData: FormData) => void;
   locked: boolean;
@@ -92,7 +95,11 @@ function RosterRow({
           ) : null}
         </p>
         <p className="truncate text-[11.5px] text-muted">
-          {profile.roles.length > 0 ? profile.roles.map((r) => ROLE_SHORT[r]).join(" ") : "ruolo n/d"}
+          <PositionTags
+            codes={entry?.positions ?? []}
+            format={format}
+            empty="posizioni non indicate"
+          />
         </p>
       </div>
 
@@ -175,7 +182,7 @@ export function MatchAdminPanel({
           <div>
             <h2 className="text-[15px] font-semibold text-ink">Iscritti e squadre</h2>
             <p className="text-[12px] text-muted">
-              {playing.length} presenti su {match.max_players} posti
+              {playing.length} presenti su {match.max_players} posti · {FORMAT_LABELS[match.format]}
             </p>
           </div>
           <StatusChip status={match.status} />
@@ -189,7 +196,8 @@ export function MatchAdminPanel({
               Bilancia automaticamente
             </SubmitButton>
             <span className="text-[12px] text-muted">
-              Portieri divisi, poi riempimento della squadra con meno giocatori.
+              Portieri divisi, poi riempimento della squadra con meno giocatori. Usa le posizioni
+              preferite per {FORMAT_SHORT[match.format]}.
             </span>
           </form>
           <div className="mt-3">
@@ -204,6 +212,7 @@ export function MatchAdminPanel({
               profile={profile}
               entry={entryByProfile.get(profile.id)}
               matchId={match.id}
+              format={match.format}
               attendanceAction={attendAction}
               teamAction={teamAction}
               locked={locked}
@@ -399,6 +408,16 @@ export function MatchAdminPanel({
           <input type="hidden" name="match_id" value={match.id} />
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Tipo di partita" htmlFor="edit_format">
+              <Select id="edit_format" name="format" defaultValue={match.format}>
+                {MATCH_FORMATS.map((item) => (
+                  <option key={item} value={item}>
+                    {FORMAT_LABELS[item]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
             <Field label="Data e ora" htmlFor="edit_match_date_local">
               <Input
                 id="edit_match_date_local"

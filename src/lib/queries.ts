@@ -4,7 +4,6 @@ import type {
   MatchDetail,
   MatchListItem,
   MatchRow,
-  PlayerRole,
   PlayerStatsRow,
   PollDetail,
   PollOptionResult,
@@ -51,6 +50,7 @@ export async function listMatches(): Promise<MatchListItem[]> {
     location: match.location,
     max_players: match.max_players,
     status: match.status,
+    format: match.format,
     team_a_name: match.team_a_name,
     team_b_name: match.team_b_name,
     present_count: presentCount.get(match.id) ?? 0,
@@ -99,21 +99,56 @@ type RosterQueryRow = {
     full_name: string | null;
     avatar_url: string | null;
     jersey_number: number | null;
-    roles: PlayerRole[];
     is_active: boolean;
   } | null;
 };
+
+/** Mappa `profile_id -> codici posizione` per un insieme di profili. */
+export async function getPositionsByProfile(
+  profileIds: string[],
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (profileIds.length === 0) return map;
+
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("profile_positions")
+    .select("profile_id, position_code")
+    .in("profile_id", profileIds);
+
+  for (const row of data ?? []) {
+    const list = map.get(row.profile_id) ?? [];
+    list.push(row.position_code);
+    map.set(row.profile_id, list);
+  }
+
+  return map;
+}
+
+export async function listProfilePositions(): Promise<Map<string, string[]>> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.from("profile_positions").select("profile_id, position_code");
+
+  const map = new Map<string, string[]>();
+  for (const row of data ?? []) {
+    const list = map.get(row.profile_id) ?? [];
+    list.push(row.position_code);
+    map.set(row.profile_id, list);
+  }
+  return map;
+}
 
 export async function getRoster(matchId: string): Promise<RosterEntry[]> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("match_players")
     .select(
-      "id, profile_id, attendance, team, goals, assists, profiles:profile_id ( nickname, full_name, avatar_url, jersey_number, roles, is_active )",
+      "id, profile_id, attendance, team, goals, assists, profiles:profile_id ( nickname, full_name, avatar_url, jersey_number, is_active )",
     )
     .eq("match_id", matchId);
 
   const rows = (data ?? []) as unknown as RosterQueryRow[];
+  const positionsByProfile = await getPositionsByProfile(rows.map((row) => row.profile_id));
 
   return rows.map((row) => ({
     matchPlayerId: row.id,
@@ -122,8 +157,8 @@ export async function getRoster(matchId: string): Promise<RosterEntry[]> {
     fullName: row.profiles?.full_name ?? null,
     avatarUrl: row.profiles?.avatar_url ?? null,
     jerseyNumber: row.profiles?.jersey_number ?? null,
-    roles: row.profiles?.roles ?? [],
     isActive: row.profiles?.is_active ?? true,
+    positions: positionsByProfile.get(row.profile_id) ?? [],
     attendance: row.attendance,
     team: row.team,
     goals: row.goals,

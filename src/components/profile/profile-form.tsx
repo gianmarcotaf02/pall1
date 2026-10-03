@@ -2,28 +2,48 @@
 
 import { useActionState, useState } from "react";
 import { updateProfileAction } from "@/lib/actions/profile";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Field, Input } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FormMessage } from "@/components/ui/form-message";
-import { ROLE_LABELS, ROLE_ORDER } from "@/lib/format";
-import type { PlayerRole, Profile } from "@/types/domain";
+import { PositionPicker } from "@/components/positions/position-picker";
+import {
+  FORMAT_LABELS,
+  MATCH_FORMATS,
+  codesForFormat,
+  positionLabel,
+  positionsForFormat,
+} from "@/lib/positions";
+import type { MatchFormat, Profile } from "@/types/domain";
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export function ProfileForm({
+  profile,
+  positions,
+}: {
+  profile: Profile;
+  positions: string[];
+}) {
   const [state, action] = useActionState(updateProfileAction, null);
-  const [roles, setRoles] = useState<PlayerRole[]>(profile.roles ?? []);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(positions));
+  const [format, setFormat] = useState<MatchFormat>("eight_a_side");
 
-  function toggleRole(role: PlayerRole) {
-    setRoles((previous) =>
-      previous.includes(role) ? previous.filter((item) => item !== role) : [...previous, role],
-    );
+  function toggle(code: string) {
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
   }
 
-  const preferred = profile.preferred_role && roles.includes(profile.preferred_role)
-    ? profile.preferred_role
-    : "";
+  const codes = [...selected];
+  const selectedList = positionsForFormat(format).filter((position) => selected.has(position.code));
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="space-y-6">
+      {codes.map((code) => (
+        <input key={code} type="hidden" name="positions" value={code} />
+      ))}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nickname" htmlFor="nickname" hint="Unico nel gruppo, 3-24 caratteri.">
           <Input
@@ -58,59 +78,83 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </Field>
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="text-[13px] font-medium text-muted">Ruoli</legend>
-        <div className="flex flex-wrap gap-2">
-          {ROLE_ORDER.map((role) => {
-            const checked = roles.includes(role);
+      <fieldset className="space-y-3 border-t border-rule pt-5">
+        <legend className="text-[15px] font-semibold text-ink">Dove ti trovi bene in campo</legend>
+        <p className="text-[13px] text-muted">
+          Scegli il formato, poi tocca le posizioni sul campo. Puoi indicarne più di una per ogni
+          formato: serve all&apos;admin per formare squadre equilibrate.
+        </p>
+
+        <div className="inline-flex flex-wrap rounded-control bg-surface-2 p-1" role="tablist">
+          {MATCH_FORMATS.map((item) => {
+            const count = codesForFormat(codes, item).length;
+            const active = item === format;
             return (
-              <label key={role} className="cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="roles"
-                  value={role}
-                  checked={checked}
-                  onChange={() => toggleRole(role)}
-                  className="peer sr-only"
-                />
-                <span
-                  className={[
-                    "inline-flex h-10 items-center rounded-control border px-3.5 text-[13px] font-medium transition-colors duration-150",
-                    "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus",
-                    checked
-                      ? "border-accent-solid bg-accent-solid text-accent-on"
-                      : "border-line-strong bg-surface text-muted hover:text-ink",
-                  ].join(" ")}
-                >
-                  {ROLE_LABELS[role]}
-                </span>
-              </label>
+              <button
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFormat(item)}
+                className={[
+                  "inline-flex items-center gap-2 rounded-[7px] px-3.5 py-2 text-[13px] font-medium transition-colors duration-150",
+                  active ? "bg-accent-solid text-accent-on" : "text-muted hover:text-ink",
+                ].join(" ")}
+              >
+                {FORMAT_LABELS[item]}
+                {count > 0 ? (
+                  <span
+                    className={[
+                      "num rounded-full px-1.5 text-[10.5px]",
+                      active ? "bg-accent-on/20 text-accent-on" : "bg-surface text-muted",
+                    ].join(" ")}
+                  >
+                    {count}
+                  </span>
+                ) : null}
+              </button>
             );
           })}
         </div>
-        <p className="text-xs text-muted">Puoi selezionare più ruoli.</p>
-      </fieldset>
 
-      <Field
-        label="Ruolo preferito"
-        htmlFor="preferred_role"
-        hint={roles.length === 0 ? "Seleziona prima almeno un ruolo." : undefined}
-      >
-        <Select
-          id="preferred_role"
-          name="preferred_role"
-          defaultValue={preferred}
-          disabled={roles.length === 0}
-          className="sm:max-w-xs"
-        >
-          <option value="">Nessuna preferenza</option>
-          {ROLE_ORDER.filter((role) => roles.includes(role)).map((role) => (
-            <option key={role} value={role}>
-              {ROLE_LABELS[role]}
-            </option>
-          ))}
-        </Select>
-      </Field>
+        <div className="rounded-card border border-rule bg-paper p-4">
+          <PositionPicker
+            positions={positionsForFormat(format)}
+            selected={selected}
+            format={format}
+            onToggle={toggle}
+          />
+
+          <div className="mt-4 border-t border-rule pt-3">
+            <p className="text-[12px] text-muted">
+              Selezionate per {FORMAT_LABELS[format].toLowerCase()}:
+            </p>
+            {selectedList.length > 0 ? (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {selectedList.map((position) => (
+                  <li key={position.code}>
+                    <button
+                      type="button"
+                      onClick={() => toggle(position.code)}
+                      title="Togli questa posizione"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-accent-solid bg-accent-solid/10 px-2.5 py-1 text-[12px] font-medium text-ink"
+                    >
+                      {positionLabel(position.code)}
+                      <span aria-hidden className="text-muted">
+                        ×
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1.5 text-[12.5px] text-muted">
+                Nessuna posizione: tocca un pallino sul campo.
+              </p>
+            )}
+          </div>
+        </div>
+      </fieldset>
 
       <FormMessage state={state} />
 
