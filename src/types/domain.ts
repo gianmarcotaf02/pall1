@@ -68,6 +68,22 @@ export type PollOptionResult = {
   startsAt: string | null;
   sortOrder: number;
   voters: PollVoter[];
+  /** Sottosondaggio degli orari legato a questa opzione, se esiste. */
+  subPoll: PollSubPoll | null;
+};
+
+/**
+ * Sondaggio degli orari agganciato al giorno (opzione) di un sondaggio
+ * settimanale. È un sondaggio a tutti gli effetti, mostrato in linea.
+ */
+export type PollSubPoll = {
+  id: string;
+  question: string;
+  allowMultiple: boolean;
+  closed: boolean;
+  options: PollOptionResult[];
+  voterCount: number;
+  myVotes: string[];
 };
 
 export type PollSummary = {
@@ -81,6 +97,8 @@ export type PollSummary = {
   closed: boolean;
   /** Lunedì della settimana di riferimento, se il sondaggio ne ha una. */
   weekStart: string | null;
+  /** Opzione-giorno del padre se è un sottosondaggio degli orari. */
+  parentOptionId: string | null;
   createdAt: string;
   createdBy: string;
   creatorNickname: string;
