@@ -1,0 +1,90 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState } from "react";
+import { setTelegramNotificationsAction, unlinkTelegramAction } from "@/lib/actions/telegram";
+import { buttonClass } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/ui/confirm-submit";
+import { FormMessage } from "@/components/ui/form-message";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { IconBell, IconTelegram } from "@/components/icons";
+import type { TelegramSubscription } from "@/types/domain";
+
+export function TelegramNotifications({
+  subscription,
+  configured,
+}: {
+  subscription: TelegramSubscription | null;
+  configured: boolean;
+}) {
+  const [toggleState, toggleAction] = useActionState(setTelegramNotificationsAction, null);
+  const [unlinkState, unlinkAction] = useActionState(unlinkTelegramAction, null);
+
+  if (!configured) {
+    return (
+      <p className="rounded-control border border-rule bg-surface-2 px-3 py-2.5 text-[13px] text-muted">
+        Le notifiche Telegram non sono ancora configurate su questo server.
+      </p>
+    );
+  }
+
+  if (!subscription) {
+    return (
+      <div className="space-y-3">
+        <p className="text-[13.5px] text-muted">
+          Collega Telegram per ricevere un messaggio quando nasce una nuova partita o un nuovo
+          sondaggio. Ti basta un tocco: si apre il bot, premi <b>Start</b> e sei a posto.
+        </p>
+        <Link href="/api/telegram/link" prefetch={false} className={buttonClass({ size: "sm" })}>
+          <IconTelegram className="size-4" />
+          Collega Telegram
+        </Link>
+        <FormMessage state={toggleState} />
+      </div>
+    );
+  }
+
+  const handle = subscription.username
+    ? `@${subscription.username}`
+    : (subscription.firstName ?? "la tua chat");
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2 text-[13.5px]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-0.5 text-[12px] font-medium text-ink">
+          <span
+            aria-hidden
+            className={`size-1.5 rounded-full ${subscription.enabled ? "bg-win" : "bg-draw"}`}
+          />
+          {subscription.enabled ? "Collegato" : "In pausa"}
+        </span>
+        <span className="text-muted">{handle}</span>
+      </div>
+
+      <p className="text-[13px] text-muted">
+        {subscription.enabled
+          ? "Riceverai un messaggio su Telegram per ogni nuova partita e ogni nuovo sondaggio."
+          : "Le notifiche sono in pausa: non ti arriverà nulla finché non le riattivi."}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <form action={toggleAction}>
+          <input type="hidden" name="enabled" value={subscription.enabled ? "false" : "true"} />
+          <SubmitButton variant="secondary" size="sm" pendingLabel="Aggiornamento…">
+            <IconBell className="size-4" />
+            {subscription.enabled ? "Metti in pausa" : "Riattiva"}
+          </SubmitButton>
+        </form>
+
+        <form action={unlinkAction}>
+          <ConfirmSubmit message="Scollegare Telegram? Non riceverai più notifiche da Pall1.">
+            Scollega
+          </ConfirmSubmit>
+        </form>
+      </div>
+
+      <FormMessage state={toggleState} />
+      <FormMessage state={unlinkState} />
+    </div>
+  );
+}

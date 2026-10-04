@@ -233,3 +233,21 @@ export function IconTrash(props: IconProps) {
     </svg>
   );
 }
+
+export function IconBell(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 3.2.6 4.6 1.5 5.5H5c.9-.9 1.5-2.3 1.5-5.5Z" />
+      <path d="M10 18.5a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
+export function IconTelegram(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20.5 4.3 3.6 10.8c-.8.3-.8 1.3 0 1.6l4 1.4 1.5 4.6c.3.8 1.3.9 1.8.2l2.1-2.8 4 3c.6.5 1.5.1 1.7-.7l3-12.1c.2-.8-.6-1.5-1.2-1.2Z" />
+      <path d="m7.6 13.8 9.3-6.8-4.5 7.4" />
+    </svg>
+  );
+}
