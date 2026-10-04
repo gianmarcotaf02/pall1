@@ -27,7 +27,13 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 - **Notifiche Telegram**: chi vuole attiva il collegamento dal profilo con un tocco (si apre il bot,
   si preme *Start*); da quel momento riceve un messaggio quando nasce una **nuova partita** o un
   **nuovo sondaggio**, con **chi l'ha creato** e — per le partite — **giorno, ora, campo e formato**.
-  Può mettere in pausa o scollegare quando vuole.
+  Arriva anche il **promemoria ~12 ore prima** della partita e un avviso quando qualcuno **dà
+  forfait**, solo ai compagni di quella partita. Può mettere in pausa o scollegare quando vuole.
+- **Organizzatori**: l'admin può dare a un giocatore il "consenso" da `/admin/players`. Un
+  organizzatore può **creare partite**, ma non toccare iscritti, squadre, risultati o profili:
+  quelle restano cose da admin. Il permesso vive nel database e non è auto-assegnabile.
+- **Presenze a due scelte**: sotto la partita si conferma o si dà forfait (*Foldo, sono un
+  infame*). Chi dà forfait avvisa su Telegram i compagni di quella specifica partita.
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
@@ -174,6 +180,7 @@ npm run dev                  # http://localhost:3000
 | `TELEGRAM_BOT_TOKEN` | **solo server** | token del bot, da BotFather |
 | `TELEGRAM_BOT_USERNAME` | solo server | username del bot senza `@`, serve al deep-link |
 | `TELEGRAM_WEBHOOK_SECRET` | **solo server** | stringa casuale: Telegram la rimanda nell'header del webhook |
+| `CRON_SECRET` | **solo server**, opzionale | se impostato, l'endpoint dei promemoria richiede `Authorization: Bearer <secret>` |
 
 Su Vercel sono già impostate le due `NEXT_PUBLIC_*`. Vanno aggiunte **a mano** anche
 `SUPABASE_SERVICE_ROLE_KEY` e le tre `TELEGRAM_*` (§1.7), per Production e Preview.
@@ -212,6 +219,9 @@ remoto (`supabase migration list` → local = remote).
 | `…_poll_week` | `polls.week_start` (lunedì, opzionale) + vincolo e indice |
 | `…_poll_subpolls` | `polls.parent_option_id`: un giorno può avere il suo sottosondaggio orari |
 | `…_telegram_notifications` | `telegram_subscribers` + `telegram_link_codes` + RLS per le notifiche Telegram |
+| `…_match_reminders` | `matches.reminder_sent_at` + job `pg_cron`/`pg_net` ogni 30 min |
+| `…_organizers` | `profiles.is_organizer` + `is_organizer()` + policy di insert sulle partite |
+| `…_match_insert_author` | chi crea una partita se la intesta (`created_by = auth.uid()`) |
 | `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
 
 ```bash
@@ -244,6 +254,8 @@ npm run gen:types         # rigenera i tipi TypeScript
 - **Telegram:** le chat si iscrivono solo dal webhook (service role); l'utente vede, mette in pausa
   o cancella **solo la propria** riga; i codici di collegamento sono monouso, scadono e non sono
   leggibili dal client.
+- **Organizzatori:** `is_organizer` non è auto-assegnabile (trigger, come `is_admin`); possono solo
+  **inserire** partite, intestandosele, e niente altro.
 
 ---
 
