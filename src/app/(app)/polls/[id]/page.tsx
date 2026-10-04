@@ -94,6 +94,11 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
           <IconLock className="size-4" />
           Sondaggio chiuso: i voti restano visibili ma non si può più votare.
         </p>
+      ) : !poll.closesAt && canManage ? (
+        <p className="mt-4 flex items-center gap-2 text-[12.5px] text-muted">
+          <IconClock className="size-4" />
+          Nessuna scadenza: chiudilo quando volete per far comparire le 3 fasce con più persone.
+        </p>
       ) : null}
     </>
   );
