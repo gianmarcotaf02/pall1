@@ -59,6 +59,7 @@ export function ChatRoom({
 
   /* ---------------- Realtime ---------------- */
   useEffect(() => {
+    let cancelled = false;
     const supabase = createSupabaseBrowserClient();
     const channel = supabase
       .channel(`chat-messages-${Math.random().toString(36).slice(2)}`)
@@ -77,10 +78,22 @@ export function ChatRoom({
           const id = (payload.old as { id?: string }).id;
           if (id) setMessages((prev) => prev.filter((message) => message.id !== id));
         },
-      )
-      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+      );
+
+    // Senza un token esplicito il socket resta "anon" e la RLS scarta gli eventi
+    // in silenzio (SUBSCRIBED arriva lo stesso). Impostarlo prima di sottoscrivere
+    // è la differenza fra una chat viva e una chat muta.
+    const start = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) await supabase.realtime.setAuth(session.access_token);
+      if (!cancelled) channel.subscribe((status) => setLive(status === "SUBSCRIBED"));
+    };
+    void start();
 
     return () => {
+      cancelled = true;
       void supabase.removeChannel(channel);
     };
   }, []);
