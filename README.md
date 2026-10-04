@@ -26,7 +26,8 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
   per settimana, dalla più vicina a oggi.
 - **Notifiche Telegram**: chi vuole attiva il collegamento dal profilo con un tocco (si apre il bot,
   si preme *Start*); da quel momento riceve un messaggio quando nasce una **nuova partita** o un
-  **nuovo sondaggio**, con il bottone per aprirlo. Può mettere in pausa o scollegare quando vuole.
+  **nuovo sondaggio**, con **chi l'ha creato** e — per le partite — **giorno, ora, campo e formato**.
+  Può mettere in pausa o scollegare quando vuole.
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
@@ -145,6 +146,12 @@ Da quel momento, nel profilo compare **Collega Telegram**: genera un codice mono
 il bot con `/start <codice>`, e il webhook abbina la chat al profilo. L'utente non digita
 niente. In chat `/start` riattiva le notifiche, `/stop` le mette in pausa.
 
+I bottoni delle notifiche passano da `/open?to=…`: un bottone `url` di un bot apre **sempre**
+nel browser interno di Telegram e non c'è parametro per cambiarlo. La pagina-ponte reindirizza
+subito chi non è su Telegram mobile; a chi lo è offre l'uscita verso il browser del telefono
+(`Telegram.WebApp.openLink()` dentro una Mini App, `intent://` su Android, istruzioni su iOS,
+dove una pagina web non può forzare Safari).
+
 ---
 
 ```bash
@@ -251,6 +258,7 @@ src/
 │  │  └─ admin/        pannello di gestione (solo admin)
 │  ├─ auth/callback/   scambio del codice di conferma in sessione
 │  ├─ api/telegram/    webhook del bot + redirect di collegamento
+│  ├─ open/            pagina-ponte per aprire i link nel browser del telefono
 │  └─ globals.css      design system a token (OKLCH)
 ├─ components/
 │  ├─ ui/              primitive: button, field, badge, avatar, empty state
