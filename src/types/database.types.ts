@@ -525,6 +525,38 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_deliveries: {
+        Row: {
+          chat_id: number
+          error: string | null
+          notification_id: string
+          ok: boolean
+          sent_at: string
+        }
+        Insert: {
+          chat_id: number
+          error?: string | null
+          notification_id: string
+          ok: boolean
+          sent_at?: string
+        }
+        Update: {
+          chat_id?: number
+          error?: string | null
+          notification_id?: string
+          ok?: boolean
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       telegram_link_codes: {
         Row: {
           code: string
@@ -561,11 +593,53 @@ export type Database = {
           },
         ]
       }
+      telegram_notifications: {
+        Row: {
+          audience: string
+          button_label: string | null
+          button_url: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          kind: string
+          profile_ids: string[]
+          ref_id: string | null
+          text: string
+        }
+        Insert: {
+          audience?: string
+          button_label?: string | null
+          button_url?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kind: string
+          profile_ids?: string[]
+          ref_id?: string | null
+          text: string
+        }
+        Update: {
+          audience?: string
+          button_label?: string | null
+          button_url?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          profile_ids?: string[]
+          ref_id?: string | null
+          text?: string
+        }
+        Relationships: []
+      }
       telegram_subscribers: {
         Row: {
           chat_id: number
           created_at: string
           first_name: string | null
+          last_error: string | null
+          last_error_at: string | null
+          last_sent_at: string | null
           notifications_enabled: boolean
           profile_id: string
           telegram_username: string | null
@@ -575,6 +649,9 @@ export type Database = {
           chat_id: number
           created_at?: string
           first_name?: string | null
+          last_error?: string | null
+          last_error_at?: string | null
+          last_sent_at?: string | null
           notifications_enabled?: boolean
           profile_id: string
           telegram_username?: string | null
@@ -584,6 +661,9 @@ export type Database = {
           chat_id?: number
           created_at?: string
           first_name?: string | null
+          last_error?: string | null
+          last_error_at?: string | null
+          last_sent_at?: string | null
           notifications_enabled?: boolean
           profile_id?: string
           telegram_username?: string | null

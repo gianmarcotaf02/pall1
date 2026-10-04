@@ -1,7 +1,7 @@
 import { formatMatchDate } from "@/lib/format";
 import { FORMAT_LABELS } from "@/lib/positions";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { MatchFormat } from "@/types/domain";
+import type { Database, MatchFormat } from "@/types/domain";
 
 /**
  * Invio delle notifiche Telegram.
@@ -13,10 +13,25 @@ import type { MatchFormat } from "@/types/domain";
  * Tutte le funzioni degrado con grazia: se il bot non è configurato o Telegram
  * non risponde, tornano `false` / non fanno nulla, senza far fallire l'azione
  * dell'app che ha innescato la notifica.
+ *
+ * Ogni avviso inviato resta in `telegram_notifications` con l'esito per chat in
+ * `telegram_deliveries`: serve a sapere chi ha ricevuto cosa e a rimandarlo a chi
+ * collega il bot più tardi.
  */
 
 const TELEGRAM_API = "https://api.telegram.org";
 const SEND_TIMEOUT_MS = 5_000;
+/** Quanto indietro si guarda quando una chat nuova recupera gli avvisi persi. */
+const CATCH_UP_WINDOW_DAYS = 7;
+/** Tetto agli avvisi recuperati: meglio pochi che una raffica. */
+const CATCH_UP_MAX = 5;
+/** Telegram accetta ~1 messaggio al secondo per chat: li spaziamo. */
+const CATCH_UP_SPACING_MS = 600;
+
+const adminClient = () => createSupabaseAdminClient();
+
+type Admin = ReturnType<typeof createSupabaseAdminClient>;
+type NotificationKind = Database["public"]["Enums"] extends never ? never : "poll" | "match" | "match_reminder" | "match_fold";
 
 export function telegramBotUsername(): string | null {
   const username = process.env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "");
@@ -65,14 +80,22 @@ type Button = { label: string; url: string };
 
 type SendOptions = { button?: Button };
 
-/** Un singolo messaggio. `true` se Telegram lo ha accettato. */
+/** Esito di un invio: `ok` più il motivo dell'errore, come lo racconta Telegram. */
+export type TelegramSendResult = {
+  ok: boolean;
+  /** Codice HTTP di Telegram (`403` = bot bloccato, `429` = troppe richieste). */
+  status: number | null;
+  error: string | null;
+};
+
+/** Un singolo messaggio. */
 export async function sendTelegramMessage(
   chatId: number,
   text: string,
   options: SendOptions = {},
-): Promise<boolean> {
+): Promise<TelegramSendResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return false;
+  if (!token) return { ok: false, status: null, error: "TELEGRAM_BOT_TOKEN non configurato" };
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
@@ -92,9 +115,22 @@ export async function sendTelegramMessage(
           : {}),
       }),
     });
-    return response.ok;
-  } catch {
-    return false;
+
+    if (response.ok) return { ok: true, status: response.status, error: null };
+
+    const detail = (await response.json().catch(() => null)) as { description?: string } | null;
+    return {
+      ok: false,
+      status: response.status,
+      error: detail?.description ?? `HTTP ${response.status}`,
+    };
+  } catch (error) {
+    const aborted = error instanceof Error && error.name === "AbortError";
+    return {
+      ok: false,
+      status: null,
+      error: aborted ? "Telegram non ha risposto in tempo" : "Errore di rete verso Telegram",
+    };
   } finally {
     clearTimeout(timer);
   }
