@@ -52,8 +52,26 @@ export function weekDays(weekStart: string): string[] {
   return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 }
 
+/**
+ * I giorni della settimana utili ai sondaggi: da lunedì a sabato.
+ * La domenica non si gioca, quindi non compare fra le opzioni.
+ */
+export function pollDays(weekStart: string): string[] {
+  return Array.from({ length: 6 }, (_, index) => addDays(weekStart, index));
+}
+
 export function endOfWeek(weekStart: string): string {
   return addDays(weekStart, 6);
+}
+
+/** Giorno della settimana di una chiave data: 0 = domenica, 6 = sabato. */
+export function weekdayIndex(key: string): number {
+  return dateFromKey(key).getUTCDay();
+}
+
+/** true se la chiave data cade di domenica. */
+export function isSunday(key: string): boolean {
+  return weekdayIndex(key) === 0;
 }
 
 /** "Lunedì" */

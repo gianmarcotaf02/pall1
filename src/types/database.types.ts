@@ -359,6 +359,13 @@ export type Database = {
             referencedRelation: "standings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "polls_parent_option_id_fkey"
+            columns: ["parent_option_id"]
+            isOneToOne: false
+            referencedRelation: "poll_options"
+            referencedColumns: ["id"]
+          },
         ]
       }
       positions: {
