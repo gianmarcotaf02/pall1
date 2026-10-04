@@ -92,7 +92,7 @@ try {
   console.log("\nScritture di dominio");
   const matchInsert = await playerClient
     .from("matches")
-    .insert({ match_date: new Date().toISOString(), location: "Test RLS" })
+    .insert({ match_date: new Date().toISOString(), location: "Test RLS", created_by: player.id })
     .select("id");
   check(
     "un utente normale non crea partite",
@@ -115,6 +115,46 @@ try {
     .single();
   check("is_admin non è auto-assegnabile", afterEscalation?.is_admin === false);
   check("is_active non è auto-modificabile", afterEscalation?.is_active === true);
+
+  await playerClient.from("profiles").update({ is_organizer: true }).eq("id", player.id);
+  const { data: afterOrganizer } = await admin
+    .from("profiles")
+    .select("is_organizer")
+    .eq("id", player.id)
+    .single();
+  check("is_organizer non è auto-assegnabile", afterOrganizer?.is_organizer === false);
+
+  console.log("\nOrganizzatori");
+  // L'admin dà il consenso.
+  await admin.from("profiles").update({ is_organizer: true }).eq("id", player.id);
+
+  const organizerMatch = await playerClient
+    .from("matches")
+    .insert({
+      match_date: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+      location: "Test organizzatore",
+      created_by: player.id,
+    })
+    .select("id");
+  check(
+    "un organizzatore crea partite",
+    (organizerMatch.data ?? []).length === 1,
+    organizerMatch.error?.message,
+  );
+
+  const organizerMatchId = organizerMatch.data?.[0]?.id;
+  const organizerEdit = await playerClient
+    .from("matches")
+    .update({ location: "Modificata dall'organizzatore" })
+    .eq("id", organizerMatchId)
+    .select("id");
+  check(
+    "l'organizzatore non gestisce le partite",
+    (organizerEdit.data ?? []).length === 0,
+    organizerEdit.error?.message,
+  );
+
+  await admin.from("matches").delete().eq("id", organizerMatchId);
 
   console.log("\nIscrizioni");
   const otherJoinForMe = await otherClient
@@ -276,6 +316,21 @@ try {
     .select("id")
     .single();
   check("si vota per sé", Boolean(ownVote.data?.id), ownVote.error?.message);
+
+  const removeVote = await otherClient
+    .from("poll_votes")
+    .delete()
+    .eq("option_id", optionIds[1])
+    .eq("profile_id", other.id)
+    .select("id");
+  check("si ritira il proprio voto", (removeVote.data ?? []).length === 1, removeVote.error?.message);
+
+  const reVote = await otherClient
+    .from("poll_votes")
+    .insert({ poll_id: pollId, option_id: optionIds[1], profile_id: other.id })
+    .select("id")
+    .single();
+  check("si rivota dopo aver ritirato", Boolean(reVote.data?.id), reVote.error?.message);
 
   const weekHijack = await playerClient
     .from("polls")
