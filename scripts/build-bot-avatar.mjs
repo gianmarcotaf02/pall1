@@ -35,7 +35,9 @@ const VARIANTS = [
     file: "bot-avatar-green.png",
     background: ACCENT,
     // Marchio invertito: sagoma crema, marcature verdi (come un'icona app).
-    svg: rawSvg.replace(/currentColor/g, CREAM).replace(/fill="#f5fcf6"/g, `fill="${ACCENT}"`),
+    // Prima le marcature, poi il colore ereditato: dopo il primo replace i due
+    // path avrebbero lo stesso fill e non si distinguerebbero più.
+    svg: rawSvg.replace(/fill="#f5fcf6"/g, `fill="${ACCENT}"`).replace(/currentColor/g, CREAM),
   },
 ];
 
