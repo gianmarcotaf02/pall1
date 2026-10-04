@@ -6,8 +6,14 @@ function voter(nickname: string): PollVoter {
   return { profileId: nickname, nickname, avatarUrl: null };
 }
 
-function option(id: string, label: string, voters: PollVoter[], subPoll: PollSubPoll | null = null): PollOptionResult {
-  return { id, label, startsAt: null, sortOrder: 0, voters, subPoll };
+function option(
+  id: string,
+  label: string,
+  voters: PollVoter[],
+  subPoll: PollSubPoll | null = null,
+  startsAt: string | null = null,
+): PollOptionResult {
+  return { id, label, startsAt, sortOrder: 0, voters, subPoll };
 }
 
 function timeOption(id: string, label: string, voters: PollVoter[]): PollOptionResult {
@@ -67,17 +73,17 @@ describe("bestPollSlots", () => {
   it("ordina per numero di persone e restituisce al massimo 3 fasce", () => {
     const slots = bestPollSlots(
       poll([
-        option("d1", "Lunedì", [voter("A"), voter("B")], subPoll("s1", [timeOption("t1", "20:00", [voter("A")])])),
+        option("d1", "Lunedì", [voter("A"), voter("B")], subPoll("s1", [timeOption("t1", "20:00", [voter("A")])]), "2026-10-05T20:00"),
         option("d2", "Martedì", [voter("A"), voter("B"), voter("C")], subPoll("s2", [
           timeOption("t2", "21:00", [voter("A"), voter("B"), voter("C")]),
           timeOption("t3", "18:00", [voter("A"), voter("B")]),
-        ])),
+        ]), "2026-10-06T20:00"),
       ]),
     );
 
     expect(slots.map((slot) => `${slot.primary} ${slot.time}`)).toEqual([
-      "Lun 5 ott 21:00",
-      "Lun 5 ott 18:00",
+      "Mar 6 ott 21:00",
+      "Mar 6 ott 18:00",
       "Lun 5 ott 20:00",
     ]);
   });
