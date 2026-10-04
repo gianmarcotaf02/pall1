@@ -37,6 +37,10 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
+- **Chat di gruppo:** una chat unica per tutti, con aggiornamenti **in tempo reale**
+  (Supabase Realtime). Ogni messaggio mostra autore e ora, i giorni sono separati e il proprio
+  messaggio si può eliminare; un admin modera qualsiasi messaggio. Se il realtime salta, la chat
+  si riconcilia da sola ogni 30 secondi.
 - **Statistiche:** classifica e tabella per giocatore, calcolate in SQL.
 - **Profilo:** nickname unico, posizioni preferite per formato, numero di maglia, avatar.
 
@@ -242,6 +246,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_organizers` | `profiles.is_organizer` + `is_organizer()` + policy di insert sulle partite |
 | `…_match_insert_author` | chi crea una partita se la intesta (`created_by = auth.uid()`) |
 | `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
+| `…_chat` | `chat_messages` + RLS (lettura a tutti, scrittura a nome proprio, delete proprio/admin) + realtime |
 
 ```bash
 supabase link --project-ref yivbesunamjxdmbczmda
@@ -275,6 +280,9 @@ npm run gen:types         # rigenera i tipi TypeScript
   leggibili dal client.
 - **Organizzatori:** `is_organizer` non è auto-assegnabile (trigger, come `is_admin`); possono solo
   **inserire** partite, intestandosele, e niente altro.
+- **Chat:** si legge e si scrive solo da autenticati, e solo a nome proprio; un messaggio non si
+  modifica mai, si elimina (solo il proprio, o qualsiasi se l'utente è admin). La tabella è nella
+  publication `supabase_realtime`, così gli eventi sono filtrati dalla stessa RLS.
 
 ---
 
@@ -284,7 +292,8 @@ npm run gen:types         # rigenera i tipi TypeScript
 src/
 ├─ app/
 │  ├─ (auth)/          login, registrazione, reset password
-│  ├─ (app)/           shell autenticata: home, partite, classifica, giocatori, profilo
+│  ├─ (app)/           shell autenticata: home, partite, chat, giocatori, profilo
+│  │  ├─ chat/         chat di gruppo in tempo reale
 │  │  ├─ polls/        sondaggi: elenco, dettaglio, nuovo
 │  │  └─ admin/        pannello di gestione (solo admin)
 │  ├─ auth/callback/   scambio del codice di conferma in sessione
@@ -295,13 +304,14 @@ src/
 │  ├─ ui/              primitive: button, field, badge, avatar, empty state
 │  ├─ match/           pannello partita, controllo presenza
 │  ├─ positions/       campo 2D, selettore posizioni, pastiglie
+│  ├─ chat/            stanza di gruppo, bolle, invio ed eliminazione
 │  ├─ polls/           card, risultati cliccabili, form di creazione
 │  ├─ profile/         dati giocatore, avatar, collegamento Telegram
 │  ├─ admin/           form e pannelli di gestione
 │  └─ …
 ├─ lib/
 │  ├─ actions/         Server Actions (auth, profilo, iscrizioni, sondaggi, telegram, admin)
-│  ├─ supabase/        client server-side, client service-role, refresh in proxy
+│  ├─ supabase/        client server-side, client browser (Realtime), client service-role, refresh in proxy
 │  ├─ queries.ts       letture tipizzate
 │  ├─ positions.ts     catalogo posizioni + coordinate (rispecchia la tabella `positions`)
 │  ├─ week.ts          settimane lunedì→domenica, fuso di Roma, etichette
