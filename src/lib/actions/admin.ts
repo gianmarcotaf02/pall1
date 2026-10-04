@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOrganizer } from "@/lib/auth";
 import { errorMessage, firstIssue } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { fromDatetimeLocalValue } from "@/lib/format";
@@ -35,7 +35,8 @@ function revalidateMatch(matchId: string) {
 /* ------------------------------------------------------------------ */
 
 export async function createMatchAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const admin = await requireAdmin();
+  // Può creare partite anche un organizzatore, non solo un admin.
+  const author = await requireOrganizer();
 
   const parsed = matchSchema.safeParse({
     format: formData.get("format"),
@@ -62,7 +63,7 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
       team_a_name: parsed.data.team_a_name,
       team_b_name: parsed.data.team_b_name,
       notes: parsed.data.notes?.trim() ? parsed.data.notes.trim() : null,
-      created_by: admin.id,
+      created_by: author.id,
     })
     .select("id")
     .single();
@@ -75,11 +76,12 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
     format: parsed.data.format,
     matchDate,
     location: parsed.data.location,
-    creator: admin.nickname,
+    creator: author.nickname,
   }).catch(() => {});
 
   revalidateMatch(data.id);
-  redirect(`/admin/matches/${data.id}`);
+  // L'organizzatore non ha il pannello di gestione: va alla partita pubblica.
+  redirect(author.is_admin ? `/admin/matches/${data.id}` : `/matches/${data.id}`);
 }
 
 export async function updateMatchAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -406,6 +408,7 @@ export async function adminUpdatePlayerAction(
   const profileId = String(formData.get("profile_id") ?? "");
   const isActive = formData.get("is_active") === "on";
   const isAdmin = formData.get("is_admin") === "on";
+  const isOrganizer = formData.get("is_organizer") === "on";
 
   if (profileId === admin.id && (!isActive || !isAdmin)) {
     return { error: "Non puoi disattivare o togliere i permessi a te stesso." };
@@ -417,6 +420,7 @@ export async function adminUpdatePlayerAction(
     .update({
       is_active: isActive,
       is_admin: isAdmin,
+      is_organizer: isOrganizer,
       notes: String(formData.get("notes") ?? "").trim() || null,
     })
     .eq("id", profileId);

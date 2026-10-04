@@ -34,3 +34,13 @@ export async function requireAdmin(): Promise<Profile> {
   if (!profile.is_admin) notFound();
   return profile;
 }
+
+/**
+ * Creazione partite: admin o organizzatore. Serve al form "Nuova partita"
+ * dedicato; il pannello /admin resta riservato agli admin.
+ */
+export async function requireOrganizer(): Promise<Profile> {
+  const profile = await requireProfile();
+  if (!profile.is_admin && !profile.is_organizer) notFound();
+  return profile;
+}
