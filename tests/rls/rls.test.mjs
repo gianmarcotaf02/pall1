@@ -348,6 +348,75 @@ try {
 
   await admin.from("polls").delete().eq("id", pollId);
 
+  // --- Notifiche Telegram ---
+  const playerChat = Number(String(stamp).slice(-9));
+  const otherChat = playerChat + 1;
+
+  const directSubscribe = await playerClient
+    .from("telegram_subscribers")
+    .insert({ chat_id: playerChat, profile_id: player.id });
+  check(
+    "l'iscrizione Telegram non si crea dal client",
+    Boolean(directSubscribe.error),
+    directSubscribe.error?.message,
+  );
+
+  await admin.from("telegram_subscribers").insert([
+    { chat_id: playerChat, profile_id: player.id, telegram_username: "probe_player" },
+    { chat_id: otherChat, profile_id: other.id },
+  ]);
+
+  const visibleSubscribers = await playerClient
+    .from("telegram_subscribers")
+    .select("chat_id, profile_id");
+  check(
+    "si vede solo la propria iscrizione Telegram",
+    (visibleSubscribers.data ?? []).length === 1 &&
+      visibleSubscribers.data[0].profile_id === player.id,
+    JSON.stringify(visibleSubscribers.data),
+  );
+
+  const foreignSubscriber = await playerClient
+    .from("telegram_subscribers")
+    .update({ notifications_enabled: false })
+    .eq("chat_id", otherChat)
+    .select("chat_id");
+  check(
+    "non si tocca l'iscrizione Telegram di un altro",
+    (foreignSubscriber.data ?? []).length === 0,
+    foreignSubscriber.error?.message,
+  );
+
+  const ownSubscriber = await playerClient
+    .from("telegram_subscribers")
+    .update({ notifications_enabled: false })
+    .eq("chat_id", playerChat)
+    .select("notifications_enabled")
+    .single();
+  check(
+    "si mette in pausa la propria iscrizione Telegram",
+    ownSubscriber.data?.notifications_enabled === false,
+    ownSubscriber.error?.message,
+  );
+
+  const linkCode = `RLS${stamp}`.slice(0, 20).toUpperCase();
+  const linkInsert = await playerClient.from("telegram_link_codes").insert({
+    code: linkCode,
+    profile_id: player.id,
+    expires_at: new Date(Date.now() + 600_000).toISOString(),
+  });
+  check("si crea un codice di collegamento per sé", !linkInsert.error, linkInsert.error?.message);
+
+  const readCodes = await playerClient.from("telegram_link_codes").select("code");
+  check(
+    "i codici di collegamento non sono leggibili dal client",
+    (readCodes.data ?? []).length === 0,
+    JSON.stringify(readCodes.data),
+  );
+
+  await admin.from("telegram_subscribers").delete().in("chat_id", [playerChat, otherChat]);
+  await admin.from("telegram_link_codes").delete().eq("code", linkCode);
+
   // Pulizia
   await admin.from("matches").delete().eq("id", match.id);
 } catch (error) {
