@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { setTelegramAction } from "@/lib/actions/telegram";
 import { buttonClass } from "@/components/ui/button";
@@ -34,10 +33,12 @@ export function TelegramNotifications({
           Collega Telegram per ricevere un messaggio quando nasce una nuova partita o un nuovo
           sondaggio. Ti basta un tocco: si apre il bot, premi <b>Start</b> e sei a posto.
         </p>
-        <Link href="/api/telegram/link" prefetch={false} className={buttonClass({ size: "sm" })}>
+        {/* Ancoraggio nativo, non <Link>: la route risponde con un redirect a
+            Telegram, che il router client di Next non seguirebbe. */}
+        <a href="/api/telegram/link" className={buttonClass({ size: "sm" })}>
           <IconTelegram className="size-4" />
           Collega Telegram
-        </Link>
+        </a>
         <FormMessage state={state} />
       </div>
     );
