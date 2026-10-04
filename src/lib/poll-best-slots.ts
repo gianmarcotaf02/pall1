@@ -1,4 +1,5 @@
-import { dayLabel } from "@/lib/week";
+import { formatTime } from "@/lib/format";
+import { dayLabel, romeDateKey } from "@/lib/week";
 import type { PollDetail, PollOptionResult, PollVoter } from "@/types/domain";
 
 /**
@@ -30,11 +31,13 @@ export type PollBestSlot = {
   percentage: number;
 };
 
-const DAY_KEY = /^\d{4}-\d{2}-\d{2}/;
-const HOURS = /(?:^|T)(\d{2}:\d{2})/;
+const HOURS = /^\d{1,2}:\d{2}$/;
 
+/** Giorno di Roma (`YYYY-MM-DD`) di un istante, non il giorno UTC della stringa. */
 function dayOf(startsAt: string | null): string | null {
-  return startsAt && DAY_KEY.test(startsAt) ? startsAt.slice(0, 10) : null;
+  if (!startsAt) return null;
+  const date = new Date(startsAt);
+  return Number.isNaN(date.getTime()) ? null : romeDateKey(date);
 }
 
 /** "Lun 5 ott" se l'opzione ha una data, altrimenti la sua etichetta. */
@@ -43,11 +46,17 @@ function dayName(option: PollOptionResult): string {
   return key ? dayLabel(key) : option.label;
 }
 
-/** "18:30" da `starts_at` o dalla label, quando l'opzione è un orario. */
+/**
+ * "18:30" in ora di Roma. `starts_at` arriva dal DB in UTC: leggerne i primi
+ * caratteri mostrerebbe l'ora sbagliata (es. 17:30Z invece di 19:30).
+ */
 function timeOf(option: PollOptionResult): string | null {
-  const fromStartsAt = option.startsAt?.match(HOURS)?.[1];
-  if (fromStartsAt) return fromStartsAt;
-  return /^\d{1,2}:\d{2}$/.test(option.label.trim()) ? option.label.trim() : null;
+  if (option.startsAt) {
+    const date = new Date(option.startsAt);
+    if (!Number.isNaN(date.getTime())) return formatTime(option.startsAt);
+  }
+  const label = option.label.trim();
+  return HOURS.test(label) ? label : null;
 }
 
 export function bestPollSlots(poll: PollDetail, limit = 3): PollBestSlot[] {
