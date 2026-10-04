@@ -138,7 +138,7 @@ function voterCountOf(target: VoteTarget, myVotes: string[]) {
 /** Voto in corso di salvataggio (spinner) e azione di voto condivisa con i sottosondaggi. */
 type VoteSession = {
   votes: VoteMap;
-  pendingKey: string | null;
+  savingKeys: string[];
   vote: (target: VoteTarget, optionId: string) => void;
 };
 
@@ -161,18 +161,24 @@ export function PollResults({
   const { targets, baseVotes } = boardOf(poll);
   const [votes, applyOptimisticVote] = useOptimistic(baseVotes, applyVote);
   const [state, setState] = useState<FormState>(null);
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  // Chiavi dei voti ancora in volo: il salvataggio può essere multiplo.
+  const [savingKeys, setSavingKeys] = useState<string[]>([]);
 
   const canVote = !poll.closed;
   const isMine = poll.createdBy === me.profileId;
   const mainTarget = targets[poll.id];
 
+  function stopSaving(key: string) {
+    setSavingKeys((keys) => keys.filter((item) => item !== key));
+  }
+
   function vote(target: VoteTarget, optionId: string) {
+    const key = voteKey(target.id, optionId);
     if (target.closed) return;
-    if (pendingKey === voteKey(target.id, optionId)) return;
+    if (savingKeys.includes(key)) return;
 
     const add = !(votes[target.id] ?? []).includes(optionId);
-    setPendingKey(voteKey(target.id, optionId));
+    setSavingKeys((keys) => [...keys, key]);
 
     startTransition(async () => {
       applyOptimisticVote({
@@ -187,11 +193,11 @@ export function PollResults({
         voted: add,
       });
       setState(result ?? null);
-      setPendingKey(null);
+      stopSaving(key);
     });
   }
 
-  const session: VoteSession = { votes, pendingKey, vote };
+  const session: VoteSession = { votes, savingKeys, vote };
   const mainVotes = votes[poll.id] ?? [];
   const mainVoterCount = voterCountOf(mainTarget, mainVotes);
 
@@ -200,7 +206,7 @@ export function PollResults({
       <ul className="space-y-2.5">
         {poll.options.map((option) => {
           const view = optionVote(mainTarget, mainVotes, option, me);
-          const saving = pendingKey === voteKey(poll.id, option.id);
+          const saving = savingKeys.includes(voteKey(poll.id, option.id));
 
           return (
             <li key={option.id}>
@@ -309,7 +315,7 @@ export function PollResults({
             {mainVoterCount === 1 ? "votante" : "votanti"}
           </span>
           <span>{poll.allowMultiple ? "Risposta multipla" : "Una sola scelta"}</span>
-          {pendingKey ? (
+          {savingKeys.length > 0 ? (
             <span className="inline-flex items-center gap-1.5 text-accent-text">
               <IconSpinner className="size-3.5" />
               Salvataggio…
@@ -368,7 +374,7 @@ function SubPollVotes({
       <ul className="mt-2 flex flex-wrap gap-1.5">
         {subPoll.options.map((option) => {
           const view = optionVote(target, myVotes, option, me);
-          const saving = session.pendingKey === voteKey(subPoll.id, option.id);
+          const saving = session.savingKeys.includes(voteKey(subPoll.id, option.id));
 
           return (
             <li key={option.id}>
