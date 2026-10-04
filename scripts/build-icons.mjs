@@ -1,5 +1,5 @@
 /**
- * Genera gli asset raster del marchio a partire dagli SVG/tracciati:
+ * Genera gli asset del marchio a partire dai tracciati:
  *
  *   node scripts/build-icons.mjs      (npm run build:icons)
  *
@@ -151,6 +151,6 @@ for (const target of TARGETS) {
 await browser.close();
 
 console.log(
-  `\ncolor i: carta ${tokens.paper} · accento ${tokens.accent} · accento scuro ${tokens.accentDark} · crema ${CREAM}`,
+  `\ncolori: carta ${tokens.paper} · accento ${tokens.accent} · accento scuro ${tokens.accentDark} · crema ${CREAM}`,
 );
 console.log(`favicon.ico: 16 + 32 + 48 px · maskable ridimensionata a ${maskableScale.toFixed(3)}`);
