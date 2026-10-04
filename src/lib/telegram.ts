@@ -48,6 +48,14 @@ export function appBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 }
 
+/**
+ * URL che passa dalla pagina-ponte `/open`: dentro Telegram mostra come aprire
+ * il link nel browser del telefono, fuori reindirizza e basta.
+ */
+export function openInBrowserUrl(path: string): string {
+  return `${appBaseUrl()}/open?to=${encodeURIComponent(path)}`;
+}
+
 /** Telegram interpreta l'HTML: il testo dell'utente va neutralizzato. */
 export function escapeTelegramHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -123,13 +131,15 @@ export async function notifyNewPoll(poll: {
   id: string;
   question: string;
   details: string | null;
+  creator: string;
 }): Promise<void> {
   const lines = ["📊 <b>Nuovo sondaggio</b>", escapeTelegramHtml(poll.question)];
   if (poll.details) lines.push(`<i>${escapeTelegramHtml(poll.details)}</i>`);
+  lines.push(`👤 Creato da ${escapeTelegramHtml(poll.creator)}`);
 
   await broadcastToSubscribers({
     text: lines.join("\n"),
-    button: { label: "Apri il sondaggio", url: `${appBaseUrl()}/polls/${poll.id}` },
+    button: { label: "Apri il sondaggio", url: openInBrowserUrl(`/polls/${poll.id}`) },
   });
 }
 
@@ -138,16 +148,18 @@ export async function notifyNewMatch(match: {
   format: MatchFormat;
   matchDate: string;
   location: string;
+  creator: string;
 }): Promise<void> {
   const text = [
     "⚽ <b>Nuova partita</b>",
     `🗓 ${formatMatchDate(match.matchDate)}`,
     `📍 ${escapeTelegramHtml(match.location)}`,
     FORMAT_LABELS[match.format],
+    `👤 Creata da ${escapeTelegramHtml(match.creator)}`,
   ].join("\n");
 
   await broadcastToSubscribers({
     text,
-    button: { label: "Conferma la partita", url: `${appBaseUrl()}/matches/${match.id}` },
+    button: { label: "Conferma la partita", url: openInBrowserUrl(`/matches/${match.id}`) },
   });
 }
