@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { SectionTabs } from "@/components/section-tabs";
 import { PollResults } from "@/components/polls/poll-results";
+import { PollBestSlots } from "@/components/polls/poll-best-slots";
 import { PollActions } from "@/components/polls/poll-actions";
 import { PollStatus } from "@/components/polls/poll-status";
 import { Avatar } from "@/components/ui/avatar";
@@ -32,6 +33,8 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
   if (!poll) notFound();
 
   const canManage = poll.createdBy === profile.id || profile.is_admin;
+  const matchCreatePath =
+    profile.is_admin ? "/admin/matches" : profile.is_organizer ? "/matches/new" : null;
 
   return (
     <>
@@ -77,10 +80,10 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
           nickname: profile.nickname,
           avatarUrl: profile.avatar_url,
         }}
-        matchCreatePath={
-          profile.is_admin ? "/admin/matches" : profile.is_organizer ? "/matches/new" : null
-        }
+        matchCreatePath={matchCreatePath}
       />
+
+      {poll.closed ? <PollBestSlots poll={poll} matchCreatePath={matchCreatePath} /> : null}
 
       <div className="mt-6">
         <PollActions poll={poll} canManage={canManage} />
