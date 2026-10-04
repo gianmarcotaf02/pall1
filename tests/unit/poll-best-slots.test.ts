@@ -123,7 +123,7 @@ describe("bestPollSlots", () => {
         option("d1", "Lunedì", [voter("A")], subPoll("s1", [
           // 17:30Z = 19:30 a Roma (ora legale).
           { id: "t1", label: "19:30", startsAt: "2026-10-05T17:30:00+00:00", sortOrder: 0, voters: [voter("A")], subPoll: null },
-        ])),
+        ]), "2026-10-04T22:30:00+00:00"),
       ]),
     );
 
