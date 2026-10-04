@@ -7,7 +7,24 @@ import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import { FormMessage } from "@/components/ui/form-message";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconBell, IconTelegram } from "@/components/icons";
+import { formatMatchDate } from "@/lib/format";
 import type { TelegramSubscription } from "@/types/domain";
+
+/** Telegram racconta gli errori in inglese: qui diventano un consiglio utile. */
+function errorHint(error: string) {
+  const value = error.toLowerCase();
+  if (value.includes("blocked")) {
+    return "Risulti aver bloccato il bot: apri la chat con il bot e premi Start per riattivare.";
+  }
+  if (value.includes("deactivated")) return "Il tuo account Telegram risulta disattivato.";
+  if (value.includes("chat not found")) {
+    return "La chat con il bot non esiste più: ricollega Telegram.";
+  }
+  if (value.includes("too many requests")) {
+    return "Troppi messaggi in poco tempo: Telegram ha chiesto di aspettare.";
+  }
+  return error;
+}
 
 export function TelegramNotifications({
   subscription,
@@ -66,6 +83,26 @@ export function TelegramNotifications({
           ? "Riceverai un messaggio su Telegram per ogni nuova partita e ogni nuovo sondaggio."
           : "Le notifiche sono in pausa: non ti arriverà nulla finché non le riattivi."}
       </p>
+
+      {subscription.lastError ? (
+        <p className="rounded-control border border-loss/35 bg-loss/8 px-3 py-2.5 text-[12.5px] text-ink">
+          <b>Ultimo invio non riuscito.</b> {errorHint(subscription.lastError)}
+          {subscription.lastErrorAt ? (
+            <span className="text-muted"> · {formatMatchDate(subscription.lastErrorAt)}</span>
+          ) : null}
+        </p>
+      ) : (
+        <p className="text-[12.5px] text-muted">
+          {subscription.lastSentAt ? (
+            <>
+              Ultimo avviso ricevuto: {""}
+              <span className="num text-ink">{formatMatchDate(subscription.lastSentAt)}</span>
+            </>
+          ) : (
+            "Nessun avviso ricevuto finora."
+          )}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <form action={action}>

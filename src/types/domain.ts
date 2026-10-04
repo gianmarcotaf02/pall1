@@ -63,6 +63,11 @@ export type TelegramSubscription = {
   username: string | null;
   firstName: string | null;
   enabled: boolean;
+  /** Ultimo avviso accettato da Telegram (null = nessuno ancora). */
+  lastSentAt: string | null;
+  /** Ultimo errore di invio, per capire perché non arriva nulla. */
+  lastError: string | null;
+  lastErrorAt: string | null;
 };
 
 /* ------------------------------------------------------------------ */

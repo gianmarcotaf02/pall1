@@ -262,7 +262,9 @@ export async function getMyTelegramSubscription(): Promise<TelegramSubscription 
   // La RLS limita alla riga del profilo corrente.
   const { data } = await supabase
     .from("telegram_subscribers")
-    .select("chat_id, telegram_username, first_name, notifications_enabled")
+    .select(
+      "chat_id, telegram_username, first_name, notifications_enabled, last_sent_at, last_error, last_error_at",
+    )
     .maybeSingle();
 
   if (!data) return null;
@@ -272,6 +274,9 @@ export async function getMyTelegramSubscription(): Promise<TelegramSubscription 
     username: data.telegram_username,
     firstName: data.first_name,
     enabled: data.notifications_enabled,
+    lastSentAt: data.last_sent_at,
+    lastError: data.last_error,
+    lastErrorAt: data.last_error_at,
   };
 }
 
