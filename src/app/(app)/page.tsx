@@ -4,12 +4,14 @@ import { NextMatchPanel } from "@/components/match/next-match";
 import { PollCard } from "@/components/polls/poll-card";
 import { QuickAction } from "@/components/quick-action";
 import { StandingsTable } from "@/components/stats/standings-table";
+import { TelegramBanner } from "@/components/telegram-banner";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { IconCalendar, IconPitch } from "@/components/icons";
 import { requireProfile } from "@/lib/auth";
 import { formatMatchDate } from "@/lib/format";
 import {
   getMyAttendance,
+  getMyTelegramSubscription,
   listMatches,
   listPlayerStats,
   listPolls,
@@ -19,6 +21,7 @@ import {
   splitMatches,
 } from "@/lib/queries";
 import { shortSummary } from "@/lib/positions";
+import { isTelegramConfigured } from "@/lib/telegram";
 
 export default async function DashboardPage() {
   const profile = await requireProfile();
@@ -28,13 +31,17 @@ export default async function DashboardPage() {
   const next = upcoming[0] ?? null;
   const myAttendance = next ? await getMyAttendance(next.id, profile.id) : null;
 
-  const [standings, stats, players, polls, positionsByProfile] = await Promise.all([
+  const [standings, stats, players, polls, positionsByProfile, telegram] = await Promise.all([
     listStandings(),
     listPlayerStats(),
     listProfiles(),
     listPolls(profile.id),
     listProfilePositions(),
+    getMyTelegramSubscription(),
   ]);
+
+  // Avviso Telegram: solo se il bot è configurato e questo profilo non è collegato.
+  const showTelegramBanner = isTelegramConfigured() && telegram === null;
 
   const subtitleById = new Map(
     standings
@@ -61,6 +68,8 @@ export default async function DashboardPage() {
         title={`Ciao, ${profile.nickname}`}
         description="Ecco come sta andando il nostro calcetto."
       />
+
+      {showTelegramBanner ? <TelegramBanner /> : null}
 
       {/* Scelta rapida: partita o sondaggio, sempre sulla stessa riga */}
       <section className="mb-6 grid grid-cols-2 gap-3">
