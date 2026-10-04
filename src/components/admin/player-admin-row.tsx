@@ -72,6 +72,19 @@ export function PlayerAdminRow({
               />
               Admin
             </label>
+
+            <label
+              className="inline-flex cursor-pointer items-center gap-2 text-[13px] text-ink"
+              title="Può creare partite, ma non gestire squadre e risultati"
+            >
+              <input
+                type="checkbox"
+                name="is_organizer"
+                defaultChecked={player.is_organizer}
+                className="size-4 accent-[var(--accent-solid)]"
+              />
+              Organizzatore
+            </label>
           </div>
         </div>
 

@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BottomNav, RailNav } from "@/components/nav";
-import { IconLogout, IconShield } from "@/components/icons";
+import { IconLogout, IconPitch, IconShield } from "@/components/icons";
 import type { Profile } from "@/types/domain";
 
 function Wordmark() {
@@ -31,7 +31,7 @@ export function AppShell({
           <Wordmark />
         </div>
 
-        <RailNav isAdmin={profile.is_admin} />
+        <RailNav isAdmin={profile.is_admin} isOrganizer={profile.is_organizer} />
 
         <div className="mt-auto space-y-3 border-t border-rule pt-4">
           <Link
@@ -42,7 +42,11 @@ export function AppShell({
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium text-ink">{profile.nickname}</span>
               <span className="block truncate text-[11px] text-muted">
-                {profile.is_admin ? "Amministratore" : "Giocatore"}
+                {profile.is_admin
+                  ? "Amministratore"
+                  : profile.is_organizer
+                    ? "Organizzatore"
+                    : "Giocatore"}
               </span>
             </span>
           </Link>
@@ -78,6 +82,14 @@ export function AppShell({
               >
                 <IconShield className="size-4 text-accent-text" />
                 Gestione
+              </Link>
+            ) : profile.is_organizer ? (
+              <Link
+                href="/matches/new"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rule px-3 text-[12px] font-medium text-muted transition-colors duration-150 hover:text-ink"
+              >
+                <IconPitch className="size-4 text-accent-text" />
+                Organizza
               </Link>
             ) : null}
             <ThemeToggle />
