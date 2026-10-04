@@ -25,7 +25,8 @@ function sortMessages(list: ClientMessage[]): ClientMessage[] {
 function mergeMessages(prev: ClientMessage[], incoming: ChatMessage[]): ClientMessage[] {
   const byId = new Map(prev.map((message) => [message.id, message]));
   for (const message of incoming) {
-    byId.set(message.id, { ...byId.get(message.id), ...message, pending: false });
+    const existing = byId.get(message.id);
+    byId.set(message.id, existing ? { ...existing, ...message } : message);
   }
   return sortMessages([...byId.values()]);
 }

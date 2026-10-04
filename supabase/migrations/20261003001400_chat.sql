@@ -21,6 +21,11 @@ comment on table public.chat_messages is
 create index chat_messages_created_idx on public.chat_messages (created_at desc);
 create index chat_messages_profile_idx on public.chat_messages (profile_id);
 
+-- Con la RLS attiva un evento DELETE porta con sé solo la chiave primaria: senza
+-- i valori vecchi il realtime non riesce a valutare la policy e scarta l'evento.
+-- `full` rende disponibile la riga eliminata (e quindi il suo `id`).
+alter table public.chat_messages replica identity full;
+
 -- ------------------------------------------------------------
 -- RLS
 -- ------------------------------------------------------------
