@@ -156,3 +156,18 @@ export const pollStatusSchema = z.object({
   poll_id: z.string().uuid("Sondaggio non valido."),
   is_closed: z.enum(["true", "false"]),
 });
+
+export const MAX_CHAT_MESSAGE_LENGTH = 1000;
+
+/** Un messaggio della chat di gruppo: una riga, fino a 1000 caratteri. */
+export const chatMessageSchema = z.object({
+  body: z
+    .string()
+    .trim()
+    .min(1, "Scrivi qualcosa prima di inviare.")
+    .max(MAX_CHAT_MESSAGE_LENGTH, `Massimo ${MAX_CHAT_MESSAGE_LENGTH} caratteri.`),
+});
+
+export const chatMessageIdSchema = z.object({
+  id: z.string().uuid("Messaggio non valido."),
+});

@@ -143,3 +143,9 @@ export type ChatMessage = {
   body: string;
   createdAt: string;
 };
+
+/** Esito dell'invio: il messaggio salvato oppure il motivo del rifiuto. */
+export type ChatSendResult = { message: ChatMessage } | { error: string };
+
+/** Esito della cancellazione: solo conferma oppure errore. */
+export type ChatDeleteResult = { ok: true } | { error: string };
