@@ -6,15 +6,27 @@ import { errorMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-/** Mettere in pausa o riattivare le notifiche Telegram del proprio profilo. */
-export async function setTelegramNotificationsAction(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
+/**
+ * Gestione dell'iscrizione Telegram dal profilo: metti in pausa / riattiva
+ * (`intent=toggle`) oppure scollega del tutto (`intent=unlink`).
+ */
+export async function setTelegramAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const profile = await requireProfile();
-  const enabled = formData.get("enabled") === "true";
-
   const supabase = await createSupabaseServerClient();
+
+  if (formData.get("intent") === "unlink") {
+    const { error } = await supabase
+      .from("telegram_subscribers")
+      .delete()
+      .eq("profile_id", profile.id);
+
+    if (error) return { error: errorMessage(error) };
+
+    revalidatePath("/profile");
+    return { success: "Telegram scollegato." };
+  }
+
+  const enabled = formData.get("enabled") === "true";
   const { error } = await supabase
     .from("telegram_subscribers")
     .update({ notifications_enabled: enabled })
@@ -24,20 +36,4 @@ export async function setTelegramNotificationsAction(
 
   revalidatePath("/profile");
   return { success: enabled ? "Notifiche Telegram riattivate." : "Notifiche Telegram in pausa." };
-}
-
-/** Scollegare del tutto la chat Telegram dal profilo. */
-export async function unlinkTelegramAction(_prev: FormState): Promise<FormState> {
-  const profile = await requireProfile();
-
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("telegram_subscribers")
-    .delete()
-    .eq("profile_id", profile.id);
-
-  if (error) return { error: errorMessage(error) };
-
-  revalidatePath("/profile");
-  return { success: "Telegram scollegato." };
 }
