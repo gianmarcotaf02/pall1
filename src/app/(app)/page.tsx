@@ -73,9 +73,9 @@ export default async function DashboardPage() {
 
       {/* Scelta rapida: partita o sondaggio, sempre sulla stessa riga */}
       <section className="mb-6 grid grid-cols-2 gap-3">
-        {profile.is_admin ? (
+        {profile.is_admin || profile.is_organizer ? (
           <QuickAction
-            href="/admin/matches"
+            href={profile.is_admin ? "/admin/matches" : "/matches/new"}
             icon={<IconPitch className="size-7" />}
             title="Nuova partita"
             hint="Data, campo, posti"

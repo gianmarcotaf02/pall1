@@ -26,7 +26,13 @@ function isActive(pathname: string, href: string, exact: boolean, also: readonly
   return also.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-export function RailNav({ isAdmin }: { isAdmin: boolean }) {
+export function RailNav({
+  isAdmin,
+  isOrganizer = false,
+}: {
+  isAdmin: boolean;
+  isOrganizer?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -66,6 +72,22 @@ export function RailNav({ isAdmin }: { isAdmin: boolean }) {
           <span className="ml-auto rounded-full border border-rule px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted">
             ADMIN
           </span>
+        </Link>
+      ) : null}
+
+      {!isAdmin && isOrganizer ? (
+        <Link
+          href="/matches/new"
+          aria-current={pathname.startsWith("/matches/new") ? "page" : undefined}
+          className={[
+            "mt-2 flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
+            pathname.startsWith("/matches/new")
+              ? "bg-surface-2 font-medium text-ink"
+              : "text-muted hover:bg-surface-2 hover:text-ink",
+          ].join(" ")}
+        >
+          <IconPitch className="size-[18px] text-accent-text" />
+          Organizza
         </Link>
       ) : null}
 
