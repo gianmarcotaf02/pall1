@@ -2,22 +2,36 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { AvatarForm } from "@/components/profile/avatar-form";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { TelegramNotifications } from "@/components/profile/telegram-notifications";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireProfile } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions/auth";
-import { getPositionsByProfile } from "@/lib/queries";
+import { getMyTelegramSubscription, getPositionsByProfile } from "@/lib/queries";
+import { isTelegramConfigured } from "@/lib/telegram";
 
 export const metadata: Metadata = { title: "Il tuo profilo" };
 
-export default async function ProfilePage() {
+const TELEGRAM_NOTICE: Record<string, string> = {
+  error: "Non è stato possibile creare il collegamento. Riprova.",
+  unconfigured: "Le notifiche Telegram non sono configurate su questo server.",
+};
+
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ telegram?: string }>;
+}) {
   const profile = await requireProfile();
-  const [user, positionsByProfile] = await Promise.all([
+  const params = await searchParams;
+  const [user, positionsByProfile, telegram] = await Promise.all([
     getCurrentUser(),
     getPositionsByProfile([profile.id]),
+    getMyTelegramSubscription(),
   ]);
 
   const positions = positionsByProfile.get(profile.id) ?? [];
+  const telegramNotice = params.telegram ? TELEGRAM_NOTICE[params.telegram] : undefined;
 
   return (
     <>
@@ -34,6 +48,16 @@ export default async function ProfilePage() {
       <section className="mt-6 rounded-card border border-rule bg-surface p-5 md:p-6">
         <h2 className="mb-5 text-[15px] font-semibold text-ink">Dati giocatore</h2>
         <ProfileForm profile={profile} positions={positions} />
+      </section>
+
+      <section className="mt-6 rounded-card border border-rule bg-surface p-5 md:p-6">
+        <h2 className="mb-4 text-[15px] font-semibold text-ink">Notifiche Telegram</h2>
+        {telegramNotice ? (
+          <p className="mb-3 rounded-control border border-loss/35 bg-loss/8 px-3 py-2.5 text-[13px] text-ink">
+            {telegramNotice}
+          </p>
+        ) : null}
+        <TelegramNotifications subscription={telegram} configured={isTelegramConfigured()} />
       </section>
 
       <section className="mt-6 rounded-card border border-rule bg-surface p-5 md:p-6">
