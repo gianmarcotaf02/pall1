@@ -21,7 +21,7 @@
  * pagina.
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { chromium } from "@playwright/test";
 import {
@@ -37,6 +37,8 @@ import {
 
 const tokens = readBrandTokens();
 const paths = readLogoPaths();
+
+mkdirSync(resolve(ROOT, "public/icons"), { recursive: true });
 
 // `public/logo.svg` è la copia esportabile del marchio: se qualcuno la modifica
 // a mano, il marchio in pagina e le icone divergono. Meglio fermarsi.
