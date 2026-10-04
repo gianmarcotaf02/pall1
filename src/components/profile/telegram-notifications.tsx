@@ -95,11 +95,11 @@ export function TelegramNotifications({
         <p className="text-[12.5px] text-muted">
           {subscription.lastSentAt ? (
             <>
-              Ultimo avviso ricevuto: {""}
+              Ultimo avviso consegnato: {""}
               <span className="num text-ink">{formatMatchDate(subscription.lastSentAt)}</span>
             </>
           ) : (
-            "Nessun avviso ricevuto finora."
+            "Nessun avviso consegnato finora."
           )}
         </p>
       )}
