@@ -34,17 +34,11 @@ export function NextMatchPanel({
       </div>
 
       <div className="mt-6 border-t border-rule pt-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-[170px] flex-1">
             <p className="text-[13.5px] text-muted">
               <span className="num text-[15px] font-semibold text-ink">{match.present_count}</span> su{" "}
               <span className="num">{match.max_players}</span> hanno confermato
-              {match.maybe_count > 0 ? (
-                <>
-                  {" · "}
-                  <span className="num">{match.maybe_count}</span> forse
-                </>
-              ) : null}
             </p>
             <CapacityBar
               present={match.present_count}
@@ -53,7 +47,12 @@ export function NextMatchPanel({
             />
           </div>
 
-          <AttendanceControl matchId={match.id} value={myAttendance} disabled={closed} />
+          <AttendanceControl
+            matchId={match.id}
+            value={myAttendance}
+            disabled={closed}
+            className="sm:w-auto sm:shrink-0"
+          />
         </div>
 
         <Link

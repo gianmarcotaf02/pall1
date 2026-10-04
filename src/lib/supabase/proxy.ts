@@ -11,6 +11,8 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/auth",
   "/api/telegram/webhook",
+  // Chiamato da pg_cron (nessuna sessione): l'endpoint è idempotente.
+  "/api/cron/match-reminders",
   // Pagina-ponte per uscire dal browser interno di Telegram: nel WebView non
   // c'è sessione, una guardia la rimanderebbe a /login e non uscirebbe mai.
   "/open",

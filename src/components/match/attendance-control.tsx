@@ -4,13 +4,24 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { setAttendanceAction } from "@/lib/actions/participation";
 import { FormMessage } from "@/components/ui/form-message";
+import { IconCheck, IconX } from "@/components/icons";
 import type { Attendance } from "@/types/domain";
 
-const OPTIONS: Array<{ value: Attendance; label: string }> = [
-  { value: "present", label: "Ci sono" },
-  { value: "maybe", label: "Forse" },
-  { value: "absent", label: "Non ci sono" },
+/**
+ * Due sole scelte: confermo o do forfait. Il "forse" non c'è più — chi non sa
+ * non conferma, e se ci ripensa lo dice dopo (o libera il posto, che avvisa i
+ * compagni di quella specifica partita).
+ */
+
+const OPTIONS: Array<{ value: Attendance; label: string; icon: typeof IconCheck }> = [
+  { value: "present", label: "Confermo la mia presenza", icon: IconCheck },
+  { value: "absent", label: "Foldo, sono un infame", icon: IconX },
 ];
+
+const SELECTED: Record<string, string> = {
+  present: "border-accent-solid bg-accent-solid text-accent-on",
+  absent: "border-loss bg-loss/12 text-loss",
+};
 
 function Options({ value }: { value: Attendance | null }) {
   const { pending } = useFormStatus();
@@ -18,12 +29,14 @@ function Options({ value }: { value: Attendance | null }) {
   return (
     <fieldset
       disabled={pending}
-      className="flex w-full rounded-control bg-surface-2 p-1 sm:w-auto"
       aria-busy={pending}
+      className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
     >
       <legend className="sr-only">La tua presenza a questa partita</legend>
+
       {OPTIONS.map((option) => {
         const selected = value === option.value;
+        const Icon = option.icon;
         return (
           <button
             key={option.value}
@@ -32,12 +45,13 @@ function Options({ value }: { value: Attendance | null }) {
             value={option.value}
             aria-pressed={selected}
             className={[
-              "flex-1 whitespace-nowrap rounded-[7px] px-3 py-2 text-[13px] font-medium transition-colors duration-150 sm:flex-none",
+              "inline-flex items-center justify-center gap-2 rounded-control border px-3 py-2.5 text-[13px] font-medium transition-colors duration-150",
               selected
-                ? "bg-accent-solid text-accent-on"
-                : "text-muted hover:text-ink",
+                ? SELECTED[option.value]
+                : "border-rule text-muted hover:border-line-strong hover:text-ink",
             ].join(" ")}
           >
+            <Icon className="size-4 shrink-0" />
             {option.label}
           </button>
         );
@@ -60,7 +74,7 @@ export function AttendanceControl({
   const [state, action] = useActionState(setAttendanceAction, null);
 
   return (
-    <div className={[" space-y-2", className].filter(Boolean).join(" ")}>
+    <div className={["space-y-2", className].filter(Boolean).join(" ")}>
       <form action={action}>
         <input type="hidden" name="match_id" value={matchId} />
         <Options value={value} />
