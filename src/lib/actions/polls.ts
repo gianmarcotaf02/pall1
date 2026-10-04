@@ -171,6 +171,82 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
 }
 
 /**
+ * Un giorno spuntato deve avere almeno un orario scelto in quel giorno, e
+ * viceversa non si può togliere l'ultimo orario se il giorno resta votato.
+ * Restituisce il messaggio d'errore, oppure null se il voto è coerente.
+ */
+async function checkDayTimeChoice(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  args: { pollId: string; optionId: string; voted: boolean; profileId: string },
+): Promise<string | null> {
+  const { pollId, optionId, voted, profileId } = args;
+
+  const { data: poll } = await supabase
+    .from("polls")
+    .select("id, parent_option_id")
+    .eq("id", pollId)
+    .maybeSingle();
+  if (!poll) return "Sondaggio non trovato.";
+
+  // Voto su un orario (opzione di un sottosondaggio).
+  if (poll.parent_option_id) {
+    if (voted) return null;
+
+    const { data: parentOption } = await supabase
+      .from("poll_options")
+      .select("poll_id")
+      .eq("id", poll.parent_option_id)
+      .maybeSingle();
+    if (!parentOption) return null;
+
+    const { data: dayVote } = await supabase
+      .from("poll_votes")
+      .select("option_id")
+      .eq("poll_id", parentOption.poll_id)
+      .eq("option_id", poll.parent_option_id)
+      .eq("profile_id", profileId)
+      .maybeSingle();
+    if (!dayVote) return null;
+
+    // Restano altri orari dopo questa rimozione?
+    const { count } = await supabase
+      .from("poll_votes")
+      .select("id", { count: "exact", head: true })
+      .eq("poll_id", pollId)
+      .eq("profile_id", profileId)
+      .neq("option_id", optionId);
+    if ((count ?? 0) > 0) return null;
+
+    return "Lascia almeno un orario, oppure togli prima la spunta al giorno.";
+  }
+
+  // Voto su un giorno (opzione del sondaggio padre).
+  if (!voted) return null;
+
+  const { data: child } = await supabase
+    .from("polls")
+    .select("id")
+    .eq("parent_option_id", optionId)
+    .maybeSingle();
+  if (!child) return null;
+
+  const { count } = await supabase
+    .from("poll_votes")
+    .select("id", { count: "exact", head: true })
+    .eq("poll_id", child.id)
+    .eq("profile_id", profileId);
+  if ((count ?? 0) > 0) return null;
+
+  const { data: dayOption } = await supabase
+    .from("poll_options")
+    .select("label")
+    .eq("id", optionId)
+    .maybeSingle();
+
+  return `Scegli almeno un orario per ${dayOption?.label ?? "questo giorno"}.`;
+}
+
+/**
  * Salva il voto dell'utente su un'opzione. L'input è un'intenzione esplicita
  * (`voted`), non un toggle: ripetere la stessa chiamata è innocuo, quindi un
  * doppio tap o un retry non invertono il voto.
@@ -187,6 +263,14 @@ export async function setVoteAction(input: {
 
   const { poll_id, option_id, voted } = parsed.data;
   const supabase = await createSupabaseServerClient();
+
+  const choiceError = await checkDayTimeChoice(supabase, {
+    pollId: poll_id,
+    optionId: option_id,
+    voted,
+    profileId: profile.id,
+  });
+  if (choiceError) return { error: choiceError };
 
   if (voted) {
     // `ignoreDuplicates`: se il voto c'è già non si tocca nulla (niente errore

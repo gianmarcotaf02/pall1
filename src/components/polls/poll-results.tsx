@@ -145,6 +145,60 @@ type VoteSession = {
 const voteKey = (pollId: string, optionId: string) => `${pollId}:${optionId}`;
 
 /* ------------------------------------------------------------------ */
+/* Giorno + orario: un giorno vale solo con almeno un orario           */
+/* ------------------------------------------------------------------ */
+
+/** Mappe giorno↔sottosondaggio: chi è padre di chi. */
+function dayTimeMaps(poll: PollDetail) {
+  const dayToSub: Record<string, { subPollId: string; label: string }> = {};
+  const subToDay: Record<string, { dayOptionId: string; dayLabel: string }> = {};
+
+  for (const option of poll.options) {
+    if (!option.subPoll) continue;
+    dayToSub[option.id] = { subPollId: option.subPoll.id, label: option.label };
+    subToDay[option.subPoll.id] = { dayOptionId: option.id, dayLabel: option.label };
+  }
+
+  return { dayToSub, subToDay };
+}
+
+/**
+ * Blocca i voti incoerenti prima ancora di inviarli: un giorno senza nessun
+ * orario scelto, o la rimozione dell'ultimo orario mentre il giorno resta
+ * spuntato. Il server ricontrolla comunque (rete di sicurezza).
+ */
+function dayTimeBlocker(
+  poll: PollDetail,
+  votes: VoteMap,
+  target: VoteTarget,
+  optionId: string,
+  add: boolean,
+): string | null {
+  const { dayToSub, subToDay } = dayTimeMaps(poll);
+
+  if (add && target.id === poll.id) {
+    const day = dayToSub[optionId];
+    if (day && (votes[day.subPollId] ?? []).length === 0) {
+      return `Scegli almeno un orario per ${day.label}.`;
+    }
+    return null;
+  }
+
+  if (!add && target.id !== poll.id) {
+    const parent = subToDay[target.id];
+    if (!parent) return null;
+
+    const remaining = (votes[target.id] ?? []).filter((id) => id !== optionId);
+    const daySelected = (votes[poll.id] ?? []).includes(parent.dayOptionId);
+    if (remaining.length === 0 && daySelected) {
+      return "Lascia almeno un orario, oppure togli prima la spunta al giorno.";
+    }
+  }
+
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Componente                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -178,6 +232,13 @@ export function PollResults({
     if (savingKeys.includes(key)) return;
 
     const add = !(votes[target.id] ?? []).includes(optionId);
+
+    const blocker = dayTimeBlocker(poll, votes, target, optionId, add);
+    if (blocker) {
+      setState({ error: blocker });
+      return;
+    }
+
     setSavingKeys((keys) => [...keys, key]);
 
     startTransition(async () => {
@@ -410,7 +471,7 @@ function SubPollVotes({
 
       <p className="mt-2 text-[11px] text-muted">
         {canVote
-          ? "Tocca gli orari che preferisci: puoi sceglierne più di uno."
+          ? "Scegli almeno un orario: il giorno da solo non basta. Puoi sceglierne più di uno."
           : "Votazione degli orari chiusa."}
       </p>
     </div>
