@@ -7,7 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { FormMessage } from "@/components/ui/form-message";
 import { IconCheck, IconPoll } from "@/components/icons";
 import { formatMatchDate } from "@/lib/format";
-import type { PollDetail } from "@/types/domain";
+import type { PollDetail, PollSubPoll } from "@/types/domain";
 
 export function PollResults({
   poll,
@@ -121,6 +121,8 @@ export function PollResults({
                   </Link>
                 </p>
               ) : null}
+
+              {option.subPoll ? <SubPollVotes subPoll={option.subPoll} action={action} /> : null}
             </li>
           );
         })}
@@ -148,6 +150,73 @@ export function PollResults({
           </Link>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/** Elenco orari sotto un giorno: è un sondaggio a sé, votabile in linea. */
+function SubPollVotes({
+  subPoll,
+  action,
+}: {
+  subPoll: PollSubPoll;
+  action: (formData: FormData) => void;
+}) {
+  const myVotes = new Set(subPoll.myVotes);
+  const canVote = !subPoll.closed;
+
+  return (
+    <div className="mt-2 ml-1 rounded-card border border-rule bg-paper p-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+        <p className="text-[12px] font-medium text-ink">Orari preferiti</p>
+        <p className="text-[11px] text-muted">
+          <span className="num">{subPoll.voterCount}</span>{" "}
+          {subPoll.voterCount === 1 ? "votante" : "votanti"}
+          {subPoll.allowMultiple ? " · più scelte" : " · una scelta"}
+        </p>
+      </div>
+
+      <ul className="mt-2 flex flex-wrap gap-1.5">
+        {subPoll.options.map((option) => {
+          const selected = myVotes.has(option.id);
+          return (
+            <li key={option.id}>
+              <form action={action}>
+                <input type="hidden" name="poll_id" value={subPoll.id} />
+                <input type="hidden" name="option_id" value={option.id} />
+                <button
+                  type="submit"
+                  disabled={!canVote}
+                  aria-pressed={selected}
+                  title={
+                    option.voters.length > 0
+                      ? option.voters.map((voter) => voter.nickname).join(", ")
+                      : "Nessun voto"
+                  }
+                  className={[
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] transition-colors duration-150",
+                    selected
+                      ? "border-accent-solid bg-accent-solid text-accent-on"
+                      : "border-rule text-muted hover:border-line-strong hover:text-ink",
+                    canVote ? "" : "cursor-default",
+                  ].join(" ")}
+                >
+                  <span className="num font-medium">{option.label}</span>
+                  {option.voters.length > 0 ? (
+                    <span className="num text-[11px] opacity-80">{option.voters.length}</span>
+                  ) : null}
+                </button>
+              </form>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="mt-2 text-[11px] text-muted">
+        {canVote
+          ? "Tocca gli orari che preferisci: puoi sceglierne più di uno."
+          : "Votazione degli orari chiusa."}
+      </p>
     </div>
   );
 }

@@ -5,16 +5,16 @@ import { createPollAction } from "@/lib/actions/polls";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FormMessage } from "@/components/ui/form-message";
-import { IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
+import { IconCheck, IconChevronRight, IconPlus, IconTrash, IconX } from "@/components/icons";
 import {
   MAX_POLL_OPTIONS,
   MIN_POLL_OPTIONS,
 } from "@/lib/validation/schemas";
 import {
   addDays,
+  pollDays,
   relativeWeekLabel,
   startOfWeek,
-  weekDays,
   weekRangeLabel,
   weekdayName,
 } from "@/lib/week";
@@ -36,7 +36,7 @@ function emptyRow(): Row {
 const DEFAULT_TIME = "21:00";
 
 function rowsForWeek(weekStart: string): Row[] {
-  return weekDays(weekStart).map((day) => ({
+  return pollDays(weekStart).map((day) => ({
     key: nextKey++,
     label: weekdayName(day),
     startsAt: `${day}T${DEFAULT_TIME}`,
@@ -66,6 +66,10 @@ export function CreatePollForm({
   );
   const [allowMultiple, setAllowMultiple] = useState(!prefillSingleChoice);
   const [weekStart, setWeekStart] = useState<string | null>(defaultWeekStart);
+  // Con una settimana, di default ogni giorno riceve il suo sottosondaggio orari.
+  const [withSubPolls, setWithSubPolls] = useState(
+    Boolean(defaultWeekStart) && !prefillSingleChoice,
+  );
 
   const currentWeek = startOfWeek();
 
@@ -188,9 +192,45 @@ export function CreatePollForm({
           </button>
 
           <p className="text-[11.5px] text-muted">
-            Cambiando settimana le opzioni diventano i suoi sette giorni, alle {DEFAULT_TIME}.
+            Cambiando settimana le opzioni diventano i suoi giorni (lunedì–sabato), alle {DEFAULT_TIME}.
           </p>
         </div>
+
+        <input
+          type="hidden"
+          name="with_time_subpolls"
+          value={withSubPolls && weekStart ? "on" : "off"}
+        />
+
+        {weekStart ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-rule pt-3">
+            <button
+              type="button"
+              onClick={() => setWithSubPolls((value) => !value)}
+              aria-pressed={withSubPolls}
+              className={[
+                "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11.5px] transition-colors duration-150",
+                withSubPolls
+                  ? "border-accent-solid text-accent-text"
+                  : "border-rule text-muted hover:border-line-strong hover:text-ink",
+              ].join(" ")}
+            >
+              <span
+                aria-hidden
+                className={[
+                  "flex size-3.5 items-center justify-center rounded-[4px] border",
+                  withSubPolls ? "border-accent-solid bg-accent-solid text-accent-on" : "border-line-strong",
+                ].join(" ")}
+              >
+                {withSubPolls ? <IconCheck className="size-2.5" strokeWidth={3} /> : null}
+              </span>
+              Sottosondaggio orari per ogni giorno
+            </button>
+            <p className="text-[11.5px] text-muted">
+              Feriali 18:00–21:00, sabato 15:30–18:30, ogni 30 minuti.
+            </p>
+          </div>
+        ) : null}
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
