@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   Attendance,
+  ChatMessage,
   MatchDetail,
   MatchListItem,
   MatchRow,
@@ -200,6 +201,28 @@ export async function listProfiles(): Promise<Profile[]> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.from("profiles").select("*").order("nickname", { ascending: true });
   return data ?? [];
+}
+
+/**
+ * Ultimi messaggi della chat unica di gruppo, dal più vecchio al più recente.
+ * Il limite è una rete di sicurezza: la chat si estende caricando la pagina.
+ */
+export async function listChatMessages(limit = 200): Promise<ChatMessage[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("chat_messages")
+    .select("id, profile_id, body, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? [])
+    .map((row) => ({
+      id: row.id,
+      profileId: row.profile_id,
+      body: row.body,
+      createdAt: row.created_at,
+    }))
+    .reverse();
 }
 
 export async function getProfileById(id: string): Promise<Profile | null> {

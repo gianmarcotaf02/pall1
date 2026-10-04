@@ -13,6 +13,7 @@ export type PollVoteRow = Database["public"]["Tables"]["poll_votes"]["Row"];
 export type MatchRow = Database["public"]["Tables"]["matches"]["Row"];
 export type MatchPlayerRow = Database["public"]["Tables"]["match_players"]["Row"];
 export type MatchResultRow = Database["public"]["Tables"]["match_results"]["Row"];
+export type ChatMessageRow = Database["public"]["Tables"]["chat_messages"]["Row"];
 export type StandingRow = Database["public"]["Views"]["standings"]["Row"];
 export type PlayerStatsRow = Database["public"]["Views"]["player_stats"]["Row"];
 
@@ -122,4 +123,23 @@ export type PollSummary = {
 
 export type PollDetail = PollSummary & {
   options: PollOptionResult[];
+};
+
+/* ------------------------------------------------------------------ */
+/* Chat di gruppo                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Anagrafica minima dell'autore, risolta dal client per nickname e avatar. */
+export type ChatAuthor = {
+  id: string;
+  nickname: string;
+  avatarUrl: string | null;
+};
+
+/** Un messaggio della chat unica di gruppo. */
+export type ChatMessage = {
+  id: string;
+  profileId: string;
+  body: string;
+  createdAt: string;
 };
