@@ -114,6 +114,7 @@ Il piano free di Supabase limita l'invio email (~2-4/ora). Se il gruppo cresce,
 configura un SMTP tuo (Resend, Brevo, …) in **Auth → SMTP Settings**.
 
 ### 1.6 (Opzionale) Secrets per la CI
+
 Il workflow `.github/workflows/ci.yml` esegue anche la build, che richiede le variabili
 pubbliche. Aggiungi in **GitHub → Settings → Secrets and variables → Actions**:
 
@@ -160,12 +161,15 @@ npm run dev                  # http://localhost:3000
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | client + server | pubblica |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client + server | pubblica, protetta dalle RLS |
-| `NEXT_PUBLIC_SITE_URL` | server | usata per i redirect di auth; in produzione è il dominio Vercel |
-| `SUPABASE_SERVICE_ROLE_KEY` | **solo locale/CI** | mai nel frontend, mai su Vercel |
+| `NEXT_PUBLIC_SITE_URL` | server | usata per i redirect di auth e per i link nelle notifiche; in produzione è il dominio Vercel |
+| `SUPABASE_SERVICE_ROLE_KEY` | **solo server** (locale, CI e Vercel) | bypassa la RLS: mai nel frontend, mai con prefisso `NEXT_PUBLIC_` |
 | `SUPABASE_PROJECT_ID` | **solo locale/CI** | per `gen:types` |
+| `TELEGRAM_BOT_TOKEN` | **solo server** | token del bot, da BotFather |
+| `TELEGRAM_BOT_USERNAME` | solo server | username del bot senza `@`, serve al deep-link |
+| `TELEGRAM_WEBHOOK_SECRET` | **solo server** | stringa casuale: Telegram la rimanda nell'header del webhook |
 
-Su Vercel le due variabili `NEXT_PUBLIC_*` sono già impostate per
-Production, Preview e Development.
+Su Vercel sono già impostate le due `NEXT_PUBLIC_*`. Vanno aggiunte **a mano** anche
+`SUPABASE_SERVICE_ROLE_KEY` e le tre `TELEGRAM_*` (§1.7), per Production e Preview.
 
 ### Script
 
@@ -179,6 +183,7 @@ Production, Preview e Development.
 | `npm run test:rls` | test delle policy RLS contro il DB reale |
 | `npm run test:e2e` | E2E con Playwright (avvia da sé il dev server) |
 | `npm run gen:types` | rigenera `src/types/database.types.ts` dal DB |
+| `npm run telegram:webhook` | registra/speziona/rimuove il webhook del bot (`-- set <url>`) |
 | `npm run format` | Prettier |
 
 ---
@@ -199,6 +204,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_poll_options_sort_order` | rinomina `position` → `sort_order` (parola riservata SQL + attrito PostgREST) |
 | `…_poll_week` | `polls.week_start` (lunedì, opzionale) + vincolo e indice |
 | `…_poll_subpolls` | `polls.parent_option_id`: un giorno può avere il suo sottosondaggio orari |
+| `…_telegram_notifications` | `telegram_subscribers` + `telegram_link_codes` + RLS per le notifiche Telegram |
 | `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
 
 ```bash
@@ -228,6 +234,9 @@ npm run gen:types         # rigenera i tipi TypeScript
   `profile_positions`, tutti le vedono.
 - **Settimana:** `week_start` accetta solo lunedì (vincolo) e non si modifica dopo la creazione
   (trigger), come domanda e tipo di voto.
+- **Telegram:** le chat si iscrivono solo dal webhook (service role); l'utente vede, mette in pausa
+  o cancella **solo la propria** riga; i codici di collegamento sono monouso, scadono e non sono
+  leggibili dal client.
 
 ---
 
@@ -241,6 +250,7 @@ src/
 │  │  ├─ polls/        sondaggi: elenco, dettaglio, nuovo
 │  │  └─ admin/        pannello di gestione (solo admin)
 │  ├─ auth/callback/   scambio del codice di conferma in sessione
+│  ├─ api/telegram/    webhook del bot + redirect di collegamento
 │  └─ globals.css      design system a token (OKLCH)
 ├─ components/
 │  ├─ ui/              primitive: button, field, badge, avatar, empty state
