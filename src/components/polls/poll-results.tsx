@@ -12,11 +12,12 @@ import type { PollDetail, PollSubPoll } from "@/types/domain";
 export function PollResults({
   poll,
   myProfileId,
-  isAdmin = false,
+  matchCreatePath = null,
 }: {
   poll: PollDetail;
   myProfileId: string;
-  isAdmin?: boolean;
+  /** Base per creare la partita da un'opzione con data (admin o organizzatore). */
+  matchCreatePath?: string | null;
 }) {
   const [state, action] = useActionState(toggleVoteAction, null);
   const canVote = !poll.closed;
@@ -111,10 +112,10 @@ export function PollResults({
                 <p className="mt-2 pl-1 text-[11.5px] text-muted">Nessun voto su questa opzione.</p>
               )}
 
-              {isAdmin && option.startsAt ? (
+              {matchCreatePath && option.startsAt ? (
                 <p className="mt-2 pl-1">
                   <Link
-                    href={`/admin/matches?date=${encodeURIComponent(option.startsAt)}`}
+                    href={`${matchCreatePath}?date=${encodeURIComponent(option.startsAt)}`}
                     className="text-[11.5px] font-medium text-accent-text hover:underline"
                   >
                     Crea una partita con questa data

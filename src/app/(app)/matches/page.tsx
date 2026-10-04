@@ -20,8 +20,11 @@ export default async function MatchesPage() {
         title="Partite"
         description="In programma e già giocate."
         action={
-          profile.is_admin ? (
-            <Link href="/admin/matches" className={buttonClass({ variant: "secondary", size: "sm" })}>
+          profile.is_admin || profile.is_organizer ? (
+            <Link
+              href={profile.is_admin ? "/admin/matches" : "/matches/new"}
+              className={buttonClass({ variant: "secondary", size: "sm" })}
+            >
               Nuova partita
             </Link>
           ) : null

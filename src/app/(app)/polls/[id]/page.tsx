@@ -70,7 +70,13 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
         </p>
       ) : null}
 
-      <PollResults poll={poll} myProfileId={profile.id} isAdmin={profile.is_admin} />
+      <PollResults
+        poll={poll}
+        myProfileId={profile.id}
+        matchCreatePath={
+          profile.is_admin ? "/admin/matches" : profile.is_organizer ? "/matches/new" : null
+        }
+      />
 
       <div className="mt-6">
         <PollActions poll={poll} canManage={canManage} />
