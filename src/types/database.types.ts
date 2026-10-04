@@ -313,6 +313,7 @@ export type Database = {
           details: string | null
           id: string
           is_closed: boolean
+          parent_option_id: string | null
           question: string
           updated_at: string
           week_start: string | null
@@ -325,6 +326,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_closed?: boolean
+          parent_option_id?: string | null
           question: string
           updated_at?: string
           week_start?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_closed?: boolean
+          parent_option_id?: string | null
           question?: string
           updated_at?: string
           week_start?: string | null
