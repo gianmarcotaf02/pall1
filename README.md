@@ -220,6 +220,7 @@ Su Vercel sono già impostate le due `NEXT_PUBLIC_*`. Vanno aggiunte **a mano** 
 | `npm run test:rls` | test delle policy RLS contro il DB reale |
 | `npm run test:e2e` | E2E con Playwright (avvia da sé il dev server) |
 | `npm run gen:types` | rigenera `src/types/database.types.ts` dal DB |
+| `npm run build:brand` | rigenera favicon, icone app e immagine di condivisione (vedi §5, Marchio) |
 | `npm run telegram:webhook` | registra/speziona/rimuove il webhook del bot (`-- set <url>`) |
 | `npm run format` | Prettier |
 
