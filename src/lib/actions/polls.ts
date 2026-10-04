@@ -168,32 +168,40 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
   redirect(`/polls/${poll.id}`);
 }
 
-export async function toggleVoteAction(_prev: FormState, formData: FormData): Promise<FormState> {
+/**
+ * Salva il voto dell'utente su un'opzione. L'input è un'intenzione esplicita
+ * (`voted`), non un toggle: ripetere la stessa chiamata è innocuo, quindi un
+ * doppio tap o un retry non invertono il voto.
+ */
+export async function setVoteAction(input: {
+  poll_id: string;
+  option_id: string;
+  voted: boolean;
+}): Promise<FormState> {
   const profile = await requireProfile();
 
-  const parsed = pollVoteSchema.safeParse({
-    poll_id: formData.get("poll_id"),
-    option_id: formData.get("option_id"),
-  });
+  const parsed = pollVoteSchema.safeParse(input);
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
-  const { poll_id, option_id } = parsed.data;
+  const { poll_id, option_id, voted } = parsed.data;
   const supabase = await createSupabaseServerClient();
 
-  const { data: existing } = await supabase
-    .from("poll_votes")
-    .select("id")
-    .eq("option_id", option_id)
-    .eq("profile_id", profile.id)
-    .maybeSingle();
-
-  if (existing) {
-    const { error } = await supabase.from("poll_votes").delete().eq("id", existing.id);
+  if (voted) {
+    // `ignoreDuplicates`: se il voto c'è già non si tocca nulla (niente errore
+    // di chiave duplicata, niente trigger di scelta singola da riattivare).
+    const { error } = await supabase
+      .from("poll_votes")
+      .upsert(
+        { poll_id, option_id, profile_id: profile.id },
+        { onConflict: "option_id,profile_id", ignoreDuplicates: true },
+      );
     if (error) return { error: errorMessage(error) };
   } else {
     const { error } = await supabase
       .from("poll_votes")
-      .insert({ poll_id, option_id, profile_id: profile.id });
+      .delete()
+      .eq("option_id", option_id)
+      .eq("profile_id", profile.id);
     if (error) return { error: errorMessage(error) };
   }
 

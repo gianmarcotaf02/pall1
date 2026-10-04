@@ -147,9 +147,14 @@ export const pollSchema = z.object({
     .max(MAX_POLL_OPTIONS, `Massimo ${MAX_POLL_OPTIONS} opzioni.`),
 });
 
+/**
+ * Voto su un'opzione. `voted` è l'esito che il client si aspetta, non un toggle
+ * cieco: così un doppio tap o un retry non invertono il voto.
+ */
 export const pollVoteSchema = z.object({
   poll_id: z.string().uuid("Sondaggio non valido."),
   option_id: z.string().uuid("Opzione non valida."),
+  voted: z.boolean(),
 });
 
 export const pollStatusSchema = z.object({

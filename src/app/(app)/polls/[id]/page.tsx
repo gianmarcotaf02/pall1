@@ -72,7 +72,11 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
 
       <PollResults
         poll={poll}
-        myProfileId={profile.id}
+        me={{
+          profileId: profile.id,
+          nickname: profile.nickname,
+          avatarUrl: profile.avatar_url,
+        }}
         matchCreatePath={
           profile.is_admin ? "/admin/matches" : profile.is_organizer ? "/matches/new" : null
         }
