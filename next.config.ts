@@ -11,10 +11,11 @@ const nextConfig: NextConfig = {
     },
   },
   /**
-   * Favicon e icone PWA hanno nome fisso (niente hash nel path), quindi il
-   * browser se le tiene in cache per giorni: dopo un cambio di marchio l'utente
-   * continua a vedere la versione vecchia. Le facciamo rivalidare sempre.
-   * I file sono < 20 kB: il costo di una richiesta è trascurabile.
+   * Favicon, icone PWA e manifest hanno nome fisso (niente hash nel path),
+   * quindi il browser se li tiene in cache per giorni: dopo un cambio di marchio
+   * l'utente continua a vedere la versione vecchia. Le facciamo rivalidare
+   * sempre. I file sono < 20 kB: il costo di una richiesta è trascurabile.
+   * (`src/app/icon.svg` è generata da Next con l'hash di build: quella no.)
    */
   async headers() {
     const revalidate = [
@@ -22,8 +23,6 @@ const nextConfig: NextConfig = {
     ];
 
     return [
-      { source: "/icon.svg", headers: revalidate },
-      { source: "/icon-maskable.svg", headers: revalidate },
       { source: "/manifest.webmanifest", headers: revalidate },
       { source: "/icons/:file*", headers: revalidate },
     ];

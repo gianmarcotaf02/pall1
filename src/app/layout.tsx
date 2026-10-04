@@ -3,18 +3,50 @@ import "@fontsource-variable/archivo";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 
+const DESCRIPTION = "Partite, squadre, risultati e statistiche del nostro calcetto.";
+
+/** Righe di presentazione quando il link viene condiviso (WhatsApp, Telegram, X…). */
+const SHARE_TITLE = "Pall1 — calcetto tra amici";
+
+/**
+ * URL pubblico del sito. Serve a rendere assoluti i link che i crawler leggono
+ * fuori dal browser (`og:image`): sono gli stessi di `appBaseUrl()` in
+ * `lib/telegram.ts`, con in più il ripiego sulle variabili di Vercel, così una
+ * preview deploy non annuncia `localhost`.
+ */
+function siteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured;
+
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  return vercel ? `https://${vercel}` : "http://localhost:3000";
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: { default: "Pall1", template: "%s · Pall1" },
-  description: "Partite, squadre, risultati e statistiche del nostro calcetto.",
+  description: DESCRIPTION,
   applicationName: "Pall1",
   manifest: "/manifest.webmanifest",
-  icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  /*
+   * Niente elenchi di icone scritti a mano: favicon, `apple-touch-icon` e
+   * immagine di condivisione arrivano dalle convenzioni di `src/app/`
+   * (`icon.svg`, `favicon.ico`, `apple-icon.png`, `opengraph-image.png`),
+   * generate da `npm run build:brand`. Tutte nascono dallo stesso marchio che
+   * l'app disegna in alto a sinistra, quindi non possono divergere.
+   */
+  openGraph: {
+    type: "website",
+    siteName: "Pall1",
+    locale: "it_IT",
+    url: "/",
+    title: SHARE_TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SHARE_TITLE,
+    description: DESCRIPTION,
   },
 };
 
