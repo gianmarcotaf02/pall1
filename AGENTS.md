@@ -43,3 +43,7 @@ supabase gen types typescript --linked > tmp/database.types.generated.ts
 - **Realtime:** le nuove tabelle che devono aggiornarsi in tempo reale vanno aggiunte alla
   publication `supabase_realtime` e, se servono gli eventi `DELETE` sotto RLS, con
   `alter table … replica identity full;` (come in `…_chat.sql`).
+- **Realtime + RLS:** sottoscrivere senza un token esplicito lascia il socket come `anon`; la RLS
+  scarta gli eventi **in silenzio** e `SUBSCRIBED` arriva comunque. Prima di `.subscribe()` fare
+  `const { data } = await supabase.auth.getSession()` e `await supabase.realtime.setAuth(...)`
+  (vedi `src/components/chat/chat-room.tsx`). È l'errore che rende una chat muta senza errori.
