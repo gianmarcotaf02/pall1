@@ -24,6 +24,9 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
   le opzioni diventano i suoi giorni con la data vera e **ogni giorno ha il suo sottosondaggio sugli
   orari** (feriali 18:00–21:00, sabato 15:30–18:30, ogni 30 minuti); i sondaggi aperti si raggruppano
   per settimana, dalla più vicina a oggi.
+- **Notifiche Telegram**: chi vuole attiva il collegamento dal profilo con un tocco (si apre il bot,
+  si preme *Start*); da quel momento riceve un messaggio quando nasce una **nuova partita** o un
+  **nuovo sondaggio**, con il bottone per aprirlo. Può mettere in pausa o scollegare quando vuole.
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
@@ -111,16 +114,37 @@ Il piano free di Supabase limita l'invio email (~2-4/ora). Se il gruppo cresce,
 configura un SMTP tuo (Resend, Brevo, …) in **Auth → SMTP Settings**.
 
 ### 1.6 (Opzionale) Secrets per la CI
-
 Il workflow `.github/workflows/ci.yml` esegue anche la build, che richiede le variabili
 pubbliche. Aggiungi in **GitHub → Settings → Secrets and variables → Actions**:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
----
+### 1.7 Bot Telegram per le notifiche
 
-## 2. Sviluppo locale
+Serve un bot: due minuti su [@BotFather](https://t.me/BotFather).
+
+1. `/newbot` → nome e username (es. `Pall1Bot`). Conserva il **token**.
+2. Inventa un `TELEGRAM_WEBHOOK_SECRET` a caso (es. `openssl rand -hex 32`). Non è il
+   token: è una password che Telegram rimanda in ogni chiamata, così il webhook scarta
+   chi non è Telegram.
+3. Metti le tre variabili in `.env.local` **e su Vercel** (vedi §2):
+   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` (senza `@`), `TELEGRAM_WEBHOOK_SECRET`.
+   Su Vercel aggiungi anche `SUPABASE_SERVICE_ROLE_KEY`, altrimenti il webhook e l'invio
+   non funzionano (resta comunque solo lato server).
+4. Registra il webhook puntandolo al dominio pubblico:
+
+   ```bash
+   npm run telegram:webhook -- set https://pall1.vercel.app
+   # verifica:  npm run telegram:webhook -- info
+   # rimozione: npm run telegram:webhook -- delete
+   ```
+
+Da quel momento, nel profilo compare **Collega Telegram**: genera un codice monouso, apre
+il bot con `/start <codice>`, e il webhook abbina la chat al profilo. L'utente non digita
+niente. In chat `/start` riattiva le notifiche, `/stop` le mette in pausa.
+
+---
 
 ```bash
 npm install
