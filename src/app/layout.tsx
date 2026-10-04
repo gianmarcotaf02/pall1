@@ -15,8 +15,8 @@ const SHARE_TITLE = "Pall1 — calcetto tra amici";
  * preview deploy non annuncia `localhost`.
  */
 function siteUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured;
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) return /^https?:\/\//.test(configured) ? configured : `https://${configured}`;
 
   const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
   return vercel ? `https://${vercel}` : "http://localhost:3000";
@@ -29,17 +29,16 @@ export const metadata: Metadata = {
   applicationName: "Pall1",
   manifest: "/manifest.webmanifest",
   /*
-   * Niente elenchi di icone scritti a mano: favicon, `apple-touch-icon` e
-   * immagine di condivisione arrivano dalle convenzioni di `src/app/`
-   * (`icon.svg`, `favicon.ico`, `apple-icon.png`, `opengraph-image.png`),
-   * generate da `npm run build:brand`. Tutte nascono dallo stesso marchio che
-   * l'app disegna in alto a sinistra, quindi non possono divergere.
+   * Le icone non sono elencate qui: favicon, `apple-touch-icon` e immagine di
+   * condivisione arrivano dalle convenzioni di `src/app/` (`icon.svg`,
+   * `favicon.ico`, `apple-icon.png`, `opengraph-image.png`), generate da
+   * `npm run build:brand`. Nascono tutte dallo stesso marchio che l'app disegna
+   * in alto a sinistra, quindi non possono divergere.
    */
   openGraph: {
     type: "website",
     siteName: "Pall1",
     locale: "it_IT",
-    url: "/",
     title: SHARE_TITLE,
     description: DESCRIPTION,
   },
