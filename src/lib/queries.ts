@@ -8,6 +8,7 @@ import type {
   PollDetail,
   PollOptionResult,
   PollRow,
+  PollSubPoll,
   PollSummary,
   Profile,
   RosterEntry,
@@ -283,6 +284,7 @@ function toPollSummary(
     isClosed: poll.is_closed,
     closed: isPollClosed(poll),
     weekStart: poll.week_start,
+    parentOptionId: poll.parent_option_id,
     createdAt: poll.created_at,
     createdBy: poll.created_by,
     creatorNickname: creator?.nickname ?? "—",
@@ -295,21 +297,30 @@ function toPollSummary(
 
 export async function listPolls(myProfileId: string): Promise<PollSummary[]> {
   const data = await loadPollData();
-  return data.polls.map((poll) => toPollSummary(poll, data, myProfileId));
+  // I sottosondaggi degli orari non compaiono nell'elenco: vivono dentro il
+  // giorno del sondaggio padre.
+  return data.polls
+    .filter((poll) => poll.parent_option_id === null)
+    .map((poll) => toPollSummary(poll, data, myProfileId));
 }
 
-export async function getPollDetail(
-  id: string,
+/** Opzioni di un sondaggio con votanti e (per i giorni) sottosondaggio orari. */
+function toOptionResults(
+  pollId: string,
+  data: Awaited<ReturnType<typeof loadPollData>>,
   myProfileId: string,
-): Promise<PollDetail | null> {
-  const data = await loadPollData();
-  const poll = data.polls.find((item) => item.id === id);
-  if (!poll) return null;
-
+  withSubPolls: boolean,
+): PollOptionResult[] {
   const profileById = new Map(data.profiles.map((profile) => [profile.id, profile]));
+  const childByParent = new Map<string, PollRow>();
+  if (withSubPolls) {
+    for (const candidate of data.polls) {
+      if (candidate.parent_option_id) childByParent.set(candidate.parent_option_id, candidate);
+    }
+  }
 
-  const options: PollOptionResult[] = data.options
-    .filter((option) => option.poll_id === poll.id)
+  return data.options
+    .filter((option) => option.poll_id === pollId)
     .map((option) => ({
       id: option.id,
       label: option.label,
@@ -326,7 +337,44 @@ export async function getPollDetail(
           };
         })
         .sort((a, b) => a.nickname.localeCompare(b.nickname)),
+      subPoll: withSubPolls
+        ? toSubPoll(childByParent.get(option.id), data, myProfileId)
+        : null,
     }));
+}
 
-  return { ...toPollSummary(poll, data, myProfileId), options };
+function toSubPoll(
+  poll: PollRow | undefined,
+  data: Awaited<ReturnType<typeof loadPollData>>,
+  myProfileId: string,
+): PollSubPoll | null {
+  if (!poll) return null;
+
+  const votes = data.votes.filter((vote) => vote.poll_id === poll.id);
+
+  return {
+    id: poll.id,
+    question: poll.question,
+    allowMultiple: poll.allow_multiple,
+    closed: isPollClosed(poll),
+    voterCount: new Set(votes.map((vote) => vote.profile_id)).size,
+    myVotes: votes
+      .filter((vote) => vote.profile_id === myProfileId)
+      .map((vote) => vote.option_id),
+    options: toOptionResults(poll.id, data, myProfileId, false),
+  };
+}
+
+export async function getPollDetail(
+  id: string,
+  myProfileId: string,
+): Promise<PollDetail | null> {
+  const data = await loadPollData();
+  const poll = data.polls.find((item) => item.id === id);
+  if (!poll) return null;
+
+  return {
+    ...toPollSummary(poll, data, myProfileId),
+    options: toOptionResults(poll.id, data, myProfileId, true),
+  };
 }

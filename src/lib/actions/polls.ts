@@ -6,18 +6,74 @@ import { requireProfile } from "@/lib/auth";
 import { errorMessage, firstIssue } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { fromDatetimeLocalValue } from "@/lib/format";
+import { timeSlotsForDay } from "@/lib/poll-times";
+import { dayLabel, isSunday, weekdayName } from "@/lib/week";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { pollSchema, pollStatusSchema, pollVoteSchema } from "@/lib/validation/schemas";
 
 function revalidatePolls(pollId?: string) {
   revalidatePath("/");
   revalidatePath("/polls");
+  // "layout" copre anche i sottosondaggi mostrati dentro il sondaggio padre.
+  revalidatePath("/polls", "layout");
   if (pollId) revalidatePath(`/polls/${pollId}`);
 }
 
 function optionalIso(value: string | undefined) {
   if (!value) return null;
   return fromDatetimeLocalValue(value);
+}
+
+/** Giorno `YYYY-MM-DD` da un valore `datetime-local`. */
+function dayKeyFromLocal(value: string | undefined): string | null {
+  if (!value) return null;
+  const [datePart] = value.split("T");
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart ?? "") ? datePart : null;
+}
+
+/**
+ * Per ogni giorno del sondaggio crea un sottosondaggio con gli orari proposti
+ * (feriali 18–21, sabato 15:30–18:30, passo 30 minuti). La domenica si salta.
+ */
+async function createTimeSubPolls(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  profileId: string,
+  options: { id: string; startsAt: string | undefined }[],
+) {
+  for (const option of options) {
+    const day = dayKeyFromLocal(option.startsAt);
+    if (!day || isSunday(day)) continue;
+
+    const slots = timeSlotsForDay(day);
+    if (slots.length === 0) continue;
+
+    const { data: subPoll, error: subPollError } = await supabase
+      .from("polls")
+      .insert({
+        question: `Orario per ${dayLabel(day)}`.slice(0, 160),
+        details: `Orari preferiti per ${weekdayName(day).toLowerCase()}.`,
+        allow_multiple: true,
+        parent_option_id: option.id,
+        created_by: profileId,
+      })
+      .select("id")
+      .single();
+
+    if (subPollError) return { error: subPollError };
+
+    const { error: slotsError } = await supabase.from("poll_options").insert(
+      slots.map((slot, index) => ({
+        poll_id: subPoll.id,
+        label: slot.label,
+        starts_at: optionalIso(slot.startsAt),
+        sort_order: index,
+      })),
+    );
+
+    if (slotsError) return { error: slotsError };
+  }
+
+  return { error: null };
 }
 
 export async function createPollAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -64,18 +120,39 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
 
   if (error) return { error: errorMessage(error) };
 
-  const { error: optionsError } = await supabase.from("poll_options").insert(
-    validOptions.map((option, index) => ({
-      poll_id: poll.id,
-      label: option.label.trim(),
-      starts_at: optionalIso(option.starts_at),
-      sort_order: index,
-    })),
-  );
+  const { data: insertedOptions, error: optionsError } = await supabase
+    .from("poll_options")
+    .insert(
+      validOptions.map((option, index) => ({
+        poll_id: poll.id,
+        label: option.label.trim(),
+        starts_at: optionalIso(option.starts_at),
+        sort_order: index,
+      })),
+    )
+    .select("id, sort_order");
 
   if (optionsError) {
     await supabase.from("polls").delete().eq("id", poll.id);
     return { error: errorMessage(optionsError) };
+  }
+
+  // I sottosondaggi degli orari per ogni giorno (attivi di default con una settimana).
+  if (formData.get("with_time_subpolls") === "on") {
+    const ordered = [...(insertedOptions ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+    const { error: subPollsError } = await createTimeSubPolls(
+      supabase,
+      profile.id,
+      ordered.map((option, index) => ({
+        id: option.id,
+        startsAt: validOptions[index]?.starts_at,
+      })),
+    );
+
+    if (subPollsError) {
+      await supabase.from("polls").delete().eq("id", poll.id);
+      return { error: errorMessage(subPollsError) };
+    }
   }
 
   revalidatePolls(poll.id);
