@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "check:contrast": "node scripts/check-contrast.mjs",
     "build:icons": "node scripts/build-icons.mjs",
+    "build:og": "node scripts/build-og-image.mjs",
+    "build:brand": "npm run build:icons && npm run build:og",
     "build:bot-avatar": "node scripts/build-bot-avatar.mjs",
     "logo:trace": "python scripts/trace-logo.py",
     "logo:preview": "node scripts/render-logo-preview.mjs",

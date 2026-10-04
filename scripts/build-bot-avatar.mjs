@@ -6,23 +6,22 @@
  * Scrive `public/icons/bot-avatar.png` (512×512). Sfondo carta come nella home,
  * sagoma verde e marcature crema: è lo stesso marchio che sta in alto a sinistra
  * nell'app. Telegram ritaglia il cerchio, quindi il numero sta dentro con margine.
+ * I colori sono i token di `globals.css`, come per gli altri asset del marchio.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { chromium } from "@playwright/test";
+import { CREAM, ROOT, readBrandTokens } from "./brand.mjs";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const outDir = resolve(root, "public/icons");
+const outDir = resolve(ROOT, "public/icons");
 const SIZE = 512;
 
 /** Sfondo carta (tema chiaro) e verde del marchio, come in `app-shell`. */
-const PAPER = "#eef6ef";
-const ACCENT = "#09782b";
-const CREAM = "#f5fcf6";
+const PAPER = readBrandTokens().paper;
+const ACCENT = readBrandTokens().accent;
 
-const rawSvg = readFileSync(resolve(root, "public/logo.svg"), "utf8").replace(/<\?xml[^>]*\?>/, "");
+const rawSvg = readFileSync(resolve(ROOT, "public/logo.svg"), "utf8").replace(/<\?xml[^>]*\?>/, "");
 
 /** Varianti da produrre: stesso marchio, due fondi. */
 const VARIANTS = [
