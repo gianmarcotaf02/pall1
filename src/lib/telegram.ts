@@ -34,6 +34,16 @@ export function telegramLinkFor(code: string): string | null {
   return `https://t.me/${username}?start=${encodeURIComponent(code)}`;
 }
 
+/**
+ * Codice monouso leggibile: niente 0/O/1/I per evitare errori di battitura,
+ * anche se in realtà l'utente non lo digita mai (viaggia nel deep-link).
+ */
+export function generateTelegramLinkCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
 export function appBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 }
