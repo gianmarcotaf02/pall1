@@ -105,7 +105,7 @@ export function PollBestSlots({
                 </span>
 
                 <span
-                  className="mt-1.5 block h-2.5 w-full overflow-hidden rounded-full bg-surface-2 transition-colors group-hover:bg-surface-3"
+                  className="mt-1.5 block h-2.5 w-full overflow-hidden rounded-full bg-surface-2 transition-colors group-hover:ring-1 group-hover:ring-line-strong"
                   aria-hidden
                 >
                   <span

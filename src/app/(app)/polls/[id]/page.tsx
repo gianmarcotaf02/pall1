@@ -73,6 +73,10 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
         </p>
       ) : null}
 
+      {poll.closed || !poll.closesAt ? (
+        <PollBestSlots poll={poll} matchCreatePath={matchCreatePath} />
+      ) : null}
+
       <PollResults
         poll={poll}
         me={{
@@ -82,10 +86,6 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
         }}
         matchCreatePath={matchCreatePath}
       />
-
-      {poll.closed || !poll.closesAt ? (
-        <PollBestSlots poll={poll} matchCreatePath={matchCreatePath} />
-      ) : null}
 
       <div className="mt-6">
         <PollActions poll={poll} canManage={canManage} />
