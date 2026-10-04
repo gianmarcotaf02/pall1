@@ -332,6 +332,78 @@ try {
     .single();
   check("si rivota dopo aver ritirato", Boolean(reVote.data?.id), reVote.error?.message);
 
+  // Il client non manda un toggle ma l'esito voluto: l'upsert "do nothing"
+  // rende l'operazione ripetibile senza duplicare né cancellare.
+  const repeatVote = await otherClient
+    .from("poll_votes")
+    .upsert(
+      { poll_id: pollId, option_id: optionIds[1], profile_id: other.id },
+      { onConflict: "option_id,profile_id", ignoreDuplicates: true },
+    )
+    .select("id");
+  const votesAfterRepeat = await otherClient
+    .from("poll_votes")
+    .select("id")
+    .eq("option_id", optionIds[1])
+    .eq("profile_id", other.id);
+  check(
+    "rivotare la stessa opzione non duplica il voto",
+    (votesAfterRepeat.data ?? []).length === 1 && !repeatVote.error,
+    repeatVote.error?.message,
+  );
+
+  const foreignUpsert = await otherClient
+    .from("poll_votes")
+    .upsert(
+      { poll_id: pollId, option_id: optionIds[0], profile_id: player.id },
+      { onConflict: "option_id,profile_id", ignoreDuplicates: true },
+    )
+    .select("id");
+  const playerVotes = await playerClient.from("poll_votes").select("id").eq("profile_id", player.id);
+  check(
+    "l'upsert non aggira il divieto di votare per altri",
+    (foreignUpsert.data ?? []).length === 0 && (playerVotes.data ?? []).length === 0,
+    foreignUpsert.error?.message,
+  );
+
+  const singlePoll = await playerClient
+    .from("polls")
+    .insert({ question: `Sondaggio a scelta singola ${stamp}`, allow_multiple: false, created_by: player.id })
+    .select("id")
+    .single();
+  const singleOptions = await playerClient
+    .from("poll_options")
+    .insert([
+      { poll_id: singlePoll.data.id, label: "Sì", sort_order: 0 },
+      { poll_id: singlePoll.data.id, label: "No", sort_order: 1 },
+    ])
+    .select("id");
+  const singleOptionIds = (singleOptions.data ?? []).map((row) => row.id);
+
+  async function singleChoiceUpsert(optionId) {
+    return otherClient
+      .from("poll_votes")
+      .upsert(
+        { poll_id: singlePoll.data.id, option_id: optionId, profile_id: other.id },
+        { onConflict: "option_id,profile_id", ignoreDuplicates: true },
+      )
+      .select("id");
+  }
+
+  await singleChoiceUpsert(singleOptionIds[0]);
+  await singleChoiceUpsert(singleOptionIds[1]);
+  await singleChoiceUpsert(singleOptionIds[1]);
+  const singleVotes = await otherClient
+    .from("poll_votes")
+    .select("option_id")
+    .eq("poll_id", singlePoll.data.id)
+    .eq("profile_id", other.id);
+  check(
+    "nella scelta singola il nuovo voto sostituisce il vecchio",
+    (singleVotes.data ?? []).length === 1 && singleVotes.data?.[0]?.option_id === singleOptionIds[1],
+    JSON.stringify(singleVotes.data),
+  );
+
   const weekHijack = await playerClient
     .from("polls")
     .update({ week_start: "2030-01-07" })
