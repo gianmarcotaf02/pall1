@@ -11,6 +11,9 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/auth",
   "/api/telegram/webhook",
+  // Pagina-ponte per uscire dal browser interno di Telegram: nel WebView non
+  // c'è sessione, una guardia la rimanderebbe a /login e non uscirebbe mai.
+  "/open",
 ];
 
 function isPublic(pathname: string) {
