@@ -20,29 +20,48 @@ const SIZE = 512;
 /** Sfondo carta (tema chiaro) e verde del marchio, come in `app-shell`. */
 const PAPER = "#eef6ef";
 const ACCENT = "#09782b";
+const CREAM = "#f5fcf6";
 
-const svg = readFileSync(resolve(root, "public/logo.svg"), "utf8")
-  .replace(/<\?xml[^>]*\?>/, "")
-  .replace(/currentColor/g, ACCENT);
+const rawSvg = readFileSync(resolve(root, "public/logo.svg"), "utf8").replace(/<\?xml[^>]*\?>/, "");
+
+/** Varianti da produrre: stesso marchio, due fondi. */
+const VARIANTS = [
+  {
+    file: "bot-avatar.png",
+    background: PAPER,
+    svg: rawSvg.replace(/currentColor/g, ACCENT),
+  },
+  {
+    file: "bot-avatar-green.png",
+    background: ACCENT,
+    // Marchio invertito: sagoma crema, marcature verdi (come un'icona app).
+    svg: rawSvg.replace(/currentColor/g, CREAM).replace(/fill="#f5fcf6"/g, `fill="${ACCENT}"`),
+  },
+];
 
 mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch();
-const page = await browser.newPage({
-  viewport: { width: SIZE, height: SIZE },
-  deviceScaleFactor: 1,
-});
 
-await page.setContent(
-  `<!doctype html><html><head><style>
-     html,body{margin:0;width:${SIZE}px;height:${SIZE}px;background:${PAPER}}
-     svg{display:block;width:${SIZE}px;height:${SIZE}px}
-   </style></head><body>${svg}</body></html>`,
-  { waitUntil: "load" },
-);
+for (const variant of VARIANTS) {
+  const page = await browser.newPage({
+    viewport: { width: SIZE, height: SIZE },
+    deviceScaleFactor: 1,
+  });
 
-const buffer = await page.screenshot();
-writeFileSync(resolve(outDir, "bot-avatar.png"), buffer);
+  await page.setContent(
+    `<!doctype html><html><head><style>
+       html,body{margin:0;width:${SIZE}px;height:${SIZE}px;background:${variant.background}}
+       svg{display:block;width:${SIZE}px;height:${SIZE}px}
+     </style></head><body>${variant.svg}</body></html>`,
+    { waitUntil: "load" },
+  );
+
+  const buffer = await page.screenshot();
+  writeFileSync(resolve(outDir, variant.file), buffer);
+  await page.close();
+
+  console.log(`${variant.file} · ${SIZE}px · ${(buffer.length / 1024).toFixed(1)} kB`);
+}
+
 await browser.close();
-
-console.log(`bot-avatar.png · ${SIZE}px · ${(buffer.length / 1024).toFixed(1)} kB`);
