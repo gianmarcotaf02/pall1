@@ -541,6 +541,48 @@ try {
     JSON.stringify(readCodes.data),
   );
 
+  // Il registro degli invii lo vedono e lo scrivono solo webhook e notifiche,
+  // con la service role: dal client deve essere invisibile e non scrivibile.
+  const readNotifications = await playerClient.from("telegram_notifications").select("id");
+  check(
+    "il registro degli avvisi non è leggibile dal client",
+    (readNotifications.data ?? []).length === 0,
+    JSON.stringify(readNotifications.data),
+  );
+
+  const writeNotifications = await admin
+    .from("telegram_notifications")
+    .insert({ kind: "poll", text: `Intruso ${stamp}`, audience: "all", profile_ids: [] })
+    .select("id")
+    .single();
+  const forgedNotification = await playerClient
+    .from("telegram_notifications")
+    .insert({ kind: "poll", text: `Falso ${stamp}` })
+    .select("id");
+  check(
+    "gli avvisi non si scrivono dal client",
+    (forgedNotification.data ?? []).length === 0 && Boolean(writeNotifications.data?.id),
+    forgedNotification.error?.message,
+  );
+
+  const readDeliveries = await playerClient.from("telegram_deliveries").select("notification_id");
+  check(
+    "il registro delle consegne non è leggibile dal client",
+    (readDeliveries.data ?? []).length === 0,
+    JSON.stringify(readDeliveries.data),
+  );
+
+  const forgeDelivery = await playerClient
+    .from("telegram_deliveries")
+    .insert({ notification_id: writeNotifications.data.id, chat_id: playerChat, ok: true })
+    .select("notification_id");
+  check(
+    "le consegne non si scrivono dal client",
+    (forgeDelivery.data ?? []).length === 0,
+    forgeDelivery.error?.message,
+  );
+
+  await admin.from("telegram_notifications").delete().eq("id", writeNotifications.data.id);
   await admin.from("telegram_subscribers").delete().in("chat_id", [playerChat, otherChat]);
   await admin.from("telegram_link_codes").delete().eq("code", linkCode);
 
