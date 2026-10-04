@@ -27,14 +27,16 @@ export const metadata: Metadata = {
   title: { default: "Pall1", template: "%s · Pall1" },
   description: DESCRIPTION,
   applicationName: "Pall1",
-  manifest: "/manifest.webmanifest",
   /*
-   * Le icone non sono elencate qui: favicon, `apple-touch-icon` e immagine di
-   * condivisione arrivano dalle convenzioni di `src/app/` (`icon.svg`,
-   * `favicon.ico`, `apple-icon.png`, `opengraph-image.png`), generate da
-   * `npm run build:brand`. Nascono tutte dallo stesso marchio che l'app disegna
-   * in alto a sinistra, quindi non possono divergere.
+   * Icone e anteprima del link: nessun elenco scritto a mano e nessuna immagine
+   * disegnata a parte. Favicon, `apple-touch-icon` e immagine di condivisione
+   * arrivano dalle convenzioni di `src/app/` (`icon.svg`, `favicon.ico`,
+   * `apple-icon.png`, `opengraph-image.png`), generate da `npm run build:brand`
+   * dallo stesso marchio che l'app disegna in alto a sinistra; le icone della
+   * home le elenca `manifest.webmanifest`.
    */
+  manifest: "/manifest.webmanifest",
+  /** Come si presenta il link quando lo si condivide (WhatsApp, Telegram, X…). */
   openGraph: {
     type: "website",
     siteName: "Pall1",
