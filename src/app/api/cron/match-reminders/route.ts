@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { notifyMatchReminder } from "@/lib/telegram";
+import { pruneOldNotifications } from "@/lib/telegram";
 
 /**
  * Promemoria ~12 ore prima della partita.
@@ -34,6 +35,10 @@ export async function POST(request: Request) {
   }
 
   const now = Date.now();
+
+  // Manutenzione del registro degli avvisi: oltre il recupero non serve più.
+  const pruned = await pruneOldNotifications();
+
   const { data: matches, error } = await admin
     .from("matches")
     .select("id, match_date, location, format")
@@ -69,5 +74,5 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true, candidates: matches?.length ?? 0, handled, sent });
+  return NextResponse.json({ ok: true, candidates: matches?.length ?? 0, handled, sent, pruned });
 }
