@@ -244,6 +244,9 @@ async function broadcast(
   const audience = input.audience ?? "all";
   const profileIds = input.profileIds ?? [];
 
+  // Avviso mirato senza destinatari: non c'è niente da registrare.
+  if (audience === "profiles" && profileIds.length === 0) return 0;
+
   const { data: notification, error } = await admin
     .from("telegram_notifications")
     .insert({
