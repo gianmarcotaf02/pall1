@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { chatMessageIdSchema, chatMessageSchema, MAX_CHAT_MESSAGE_LENGTH } from "@/lib/validation/schemas";
+import {
+  chatMessageIdSchema,
+  chatMessageSchema,
+  MAX_CHAT_MESSAGE_LENGTH,
+} from "@/lib/validation/schemas";
 import { firstIssue } from "@/lib/errors";
 
 describe("chatMessageSchema", () => {

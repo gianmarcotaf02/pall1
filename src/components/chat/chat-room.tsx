@@ -226,7 +226,9 @@ export function ChatRoom({
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
               <IconChat className="size-8 text-line-strong" />
-              <p className="font-display text-[15px] font-semibold text-ink">Ancora nessun messaggio</p>
+              <p className="font-display text-[15px] font-semibold text-ink">
+                Ancora nessun messaggio
+              </p>
               <p className="max-w-xs text-[13px] text-muted">
                 Rompi il ghiaccio: scrivi il primo messaggio del gruppo.
               </p>
@@ -328,7 +330,10 @@ export function ChatRoom({
         className="border-t border-rule px-3 pb-3 pt-2.5"
       >
         {error ? (
-          <p role="alert" className="mb-2 rounded-control bg-loss/10 px-3 py-2 text-[12.5px] text-loss">
+          <p
+            role="alert"
+            className="mb-2 rounded-control bg-loss/10 px-3 py-2 text-[12.5px] text-loss"
+          >
             {error}
           </p>
         ) : null}

@@ -79,7 +79,10 @@ function token(block, name, selector) {
   const match = block.match(new RegExp(`--${name}:\\s*oklch\\(([^)]+)\\)`));
   if (!match) throw new Error(`globals.css: token --${name} non trovato in \`${selector}\``);
 
-  const [l, c, h] = match[1].trim().split(/[\s/]+/).map(Number);
+  const [l, c, h] = match[1]
+    .trim()
+    .split(/[\s/]+/)
+    .map((value) => Number.parseFloat(value));
   if ([l, c, h].some((value) => !Number.isFinite(value))) {
     throw new Error(`globals.css: token --${name} non interpretabile: ${match[1]}`);
   }
