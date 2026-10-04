@@ -366,12 +366,13 @@ export async function sendMissedNotifications(chatId: number, profileId: string)
   // Dal più vecchio al più recente, e solo gli ultimi: niente raffiche.
   const toSend = relevant.slice(0, CATCH_UP_MAX).reverse();
 
-  if (toSend.length > 1) {
-    await sendTelegramMessage(
-      chatId,
-      `📬 <b>Avvisi ancora attuali</b>\nEcco i ${toSend.length} messaggi che ti sei perso collegandoti dopo.`,
-    );
-  }
+  // Un rigo di contesto: senza, un avviso vecchio sembra arrivato per sbaglio.
+  await sendTelegramMessage(
+    chatId,
+    toSend.length === 1
+      ? "📬 <b>Ti sei collegato dopo</b>\nEcco l'avviso ancora attuale che ti eri perso."
+      : `📬 <b>Ti sei collegato dopo</b>\nEcco i ${toSend.length} avvisi ancora attuali che ti eri perso.`,
+  );
 
   let sent = 0;
   for (const notification of toSend) {

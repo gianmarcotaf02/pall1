@@ -156,6 +156,17 @@ Da quel momento, nel profilo compare **Collega Telegram**: genera un codice mono
 il bot con `/start <codice>`, e il webhook abbina la chat al profilo. L'utente non digita
 niente. In chat `/start` riattiva le notifiche, `/stop` le mette in pausa.
 
+Ogni avviso inviato resta in `telegram_notifications` con l'esito per chat in
+`telegram_deliveries`: **si sa chi ha ricevuto cosa** (query, non congetture) e il profilo
+mostra «Ultimo avviso consegnato» oppure l'errore di Telegram. Un `403` (bot bloccato
+dall'utente, account disattivato) mette l'iscrizione in pausa da sola, invece di continuare
+a sprecare invii; un messaggio che ha fallito viene ritentato al prossimo collegamento.
+
+Chi collega il bot **dopo** la creazione di un sondaggio o di una partita riceve gli avvisi
+ancora attuali degli ultimi **7 giorni** che non ha mai ricevuto (max 5, dal più vecchio):
+un sondaggio già chiuso, una partita cancellata o giocata e gli avvisi destinati ad altri
+profili vengono scartati. Il cron giornaliero pota gli avvisi oltre i 60 giorni.
+
 I bottoni delle notifiche passano da `/open?to=…`: un bottone `url` di un bot apre **sempre**
 nel browser interno di Telegram e non c'è parametro per cambiarlo. La pagina-ponte reindirizza
 subito chi non è su Telegram mobile; a chi lo è offre l'uscita verso il browser del telefono
@@ -243,6 +254,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_poll_week` | `polls.week_start` (lunedì, opzionale) + vincolo e indice |
 | `…_poll_subpolls` | `polls.parent_option_id`: un giorno può avere il suo sottosondaggio orari |
 | `…_telegram_notifications` | `telegram_subscribers` + `telegram_link_codes` + RLS per le notifiche Telegram |
+| `…_telegram_delivery` | `telegram_notifications` + `telegram_deliveries` (registro invii) + `last_sent_at`/`last_error` sull'iscritto |
 | `…_match_reminders` | `matches.reminder_sent_at` + job `pg_cron`/`pg_net` ogni 30 min |
 | `…_organizers` | `profiles.is_organizer` + `is_organizer()` + policy di insert sulle partite |
 | `…_match_insert_author` | chi crea una partita se la intesta (`created_by = auth.uid()`) |
@@ -278,7 +290,8 @@ npm run gen:types         # rigenera i tipi TypeScript
   (trigger), come domanda e tipo di voto.
 - **Telegram:** le chat si iscrivono solo dal webhook (service role); l'utente vede, mette in pausa
   o cancella **solo la propria** riga; i codici di collegamento sono monouso, scadono e non sono
-  leggibili dal client.
+  leggibili dal client. Il registro degli invii (`telegram_notifications`, `telegram_deliveries`)
+  non ha policy: lo vedono solo webhook e notifiche, con la service role.
 - **Organizzatori:** `is_organizer` non è auto-assegnabile (trigger, come `is_admin`); possono solo
   **inserire** partite, intestandosele, e niente altro.
 - **Chat:** si legge e si scrive solo da autenticati, e solo a nome proprio; un messaggio non si
