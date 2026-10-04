@@ -472,6 +472,86 @@ try {
   await admin.from("telegram_subscribers").delete().in("chat_id", [playerChat, otherChat]);
   await admin.from("telegram_link_codes").delete().eq("code", linkCode);
 
+  console.log("\nChat di gruppo");
+  const anonChat = await anonClient.from("chat_messages").select("id");
+  check("anon non legge la chat", (anonChat.data ?? []).length === 0, JSON.stringify(anonChat.data));
+
+  const ownMessage = await playerClient
+    .from("chat_messages")
+    .insert({ profile_id: player.id, body: "Ciao dal test RLS" })
+    .select("id")
+    .single();
+  check("si scrive in chat a nome proprio", Boolean(ownMessage.data?.id), ownMessage.error?.message);
+
+  const forgedMessage = await otherClient
+    .from("chat_messages")
+    .insert({ profile_id: player.id, body: "Per conto tuo" })
+    .select("id");
+  check(
+    "non si scrive in chat a nome di un altro",
+    (forgedMessage.data ?? []).length === 0 && forgedMessage.error !== null,
+    forgedMessage.error?.message,
+  );
+
+  const blankMessage = await playerClient
+    .from("chat_messages")
+    .insert({ profile_id: player.id, body: "   " })
+    .select("id");
+  check(
+    "i messaggi vuoti sono rifiutati dal database",
+    (blankMessage.data ?? []).length === 0 && blankMessage.error !== null,
+    blankMessage.error?.message,
+  );
+
+  const otherMessage = await otherClient
+    .from("chat_messages")
+    .insert({ profile_id: other.id, body: "Ciao a tutti" })
+    .select("id")
+    .single();
+  check("un altro utente scrive in chat", Boolean(otherMessage.data?.id), otherMessage.error?.message);
+
+  const readChat = await thirdClient.from("chat_messages").select("id");
+  check("tutti gli autenticati vedono i messaggi", (readChat.data ?? []).length >= 2);
+
+  const editChat = await playerClient
+    .from("chat_messages")
+    .update({ body: "Modificato" })
+    .eq("id", ownMessage.data.id)
+    .select("id");
+  check("un messaggio non si modifica", (editChat.data ?? []).length === 0, editChat.error?.message);
+
+  const deleteOtherChat = await playerClient
+    .from("chat_messages")
+    .delete()
+    .eq("id", otherMessage.data.id)
+    .select("id");
+  check(
+    "un utente normale non elimina i messaggi altrui",
+    (deleteOtherChat.data ?? []).length === 0,
+    deleteOtherChat.error?.message,
+  );
+
+  const deleteOwnChat = await playerClient
+    .from("chat_messages")
+    .delete()
+    .eq("id", ownMessage.data.id)
+    .select("id");
+  check("si elimina il proprio messaggio", (deleteOwnChat.data ?? []).length === 1, deleteOwnChat.error?.message);
+
+  // Moderazione: l'admin elimina qualsiasi messaggio.
+  await admin.from("profiles").update({ is_admin: true }).eq("id", player.id);
+  const adminDeleteChat = await playerClient
+    .from("chat_messages")
+    .delete()
+    .eq("id", otherMessage.data.id)
+    .select("id");
+  check(
+    "un admin elimina qualsiasi messaggio",
+    (adminDeleteChat.data ?? []).length === 1,
+    adminDeleteChat.error?.message,
+  );
+  await admin.from("profiles").update({ is_admin: false }).eq("id", player.id);
+
   // Pulizia
   await admin.from("matches").delete().eq("id", match.id);
 } catch (error) {
