@@ -215,6 +215,23 @@ export function IconPoll(props: IconProps) {
   );
 }
 
+export function IconChat(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20 11.6a7.6 7.6 0 0 1-7.6 7.6c-1.2 0-2.4-.3-3.4-.9L4 20l1.6-4.4A7.6 7.6 0 1 1 20 11.6Z" />
+    </svg>
+  );
+}
+
+export function IconSend(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20.4 3.6 3.7 10.2c-.7.3-.7 1.3.1 1.5l6 1.8 1.8 6c.2.8 1.2.8 1.5.1z" />
+      <path d="m9.8 13.8 4.6-4.6" />
+    </svg>
+  );
+}
+
 export function IconLock(props: IconProps) {
   return (
     <svg {...base} {...props}>
