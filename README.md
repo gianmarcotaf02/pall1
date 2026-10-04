@@ -351,14 +351,24 @@ La forma di riferimento è `docs/logo/riferimento.jpg`: i tracciati SVG **non so
 mano**, sono generati con potrace da quell'immagine (`scripts/trace-logo.py`), così il marchio è
 esattamente quella forma e resta nitido a ogni dimensione.
 
+**Fuori dall'app il marchio è sempre lo stesso che sta in alto a sinistra in pagina**: favicon,
+icona della home e immagine di condivisione non hanno una versione "invertita" (crema su tassello
+verde), nascono dagli stessi tracciati e dagli stessi token di colore dell'app. `scripts/brand.mjs`
+legge `logo-paths.json` e `--paper`/`--accent` da `globals.css`, quindi non esiste un hex scritto a
+mano che possa restare indietro.
+
 | File | Uso |
 |---|---|
-| `src/components/brand/logo-paths.json` | i tracciati (`hull`, `markings`, `compact`), generati |
-| `src/components/brand/logo-mark.tsx` | il marchio come componente React |
+| `src/components/brand/logo-paths.json` | i tracciati (`hull`, `markings`), generati |
+| `src/components/brand/logo-mark.tsx` | il marchio come componente React (in pagina) |
 | `public/logo.svg` | marchio isolato, `currentColor` + crema, per qualunque fondo |
-| `public/icon.svg` | icona app: tassello verde + marchio crema |
-| `public/icon-maskable.svg` | versione maskable (fondo pieno, marchio entro l'80%) |
-| `public/icons/*.png` | 192 / 512 / apple-touch / maskable, generati |
+| `src/app/icon.svg` | favicon: marchio su fondo trasparente, segue il tema del browser |
+| `src/app/favicon.ico` | 16 / 32 / 48 px, per i browser senza favicon SVG |
+| `src/app/apple-icon.png` | icona iOS, tassello carta |
+| `public/icons/icon-192.png`, `icon-512.png` | icona PWA (tassello carta + marchio) |
+| `public/icons/icon-maskable-512.png` | maskable: fondo pieno, marchio nel cerchio sicuro |
+| `public/icons/bot-avatar*.png` | foto profilo del bot Telegram |
+| `src/app/opengraph-image.png` | anteprima del link condiviso (1200×630) + `.alt.txt` |
 
 Come è composto il disegno, e perché così regge su ogni fondo:
 
@@ -369,9 +379,9 @@ Come è composto il disegno, e perché così regge su ogni fondo:
 - la **tacca della bandierina** è un vuoto vero nella sagoma (la punta è un pezzo staccato):
   lascia vedere il fondo, come nel riferimento, senza bisogno di maschere SVG né di forme
   colorate "a imitazione" del fondo.
-- `compact` è la sagoma senza la base: **non** è usata in app, solo dall'icona app e dalla
-  favicon, dove a 16-192px pallone e marcature diventano una macchia e la base a tre pezzi una
-  riga sporca. Il marchio in pagina (login, home, 404) è sempre quello completo.
+- nei tasselli (icona PWA, iOS, Telegram) il fondo è la **carta** dell'app, non il verde: così
+  l'icona è il marchio come lo si vede in pagina. Solo l'icona `maskable` ha il fondo pieno, che
+  i launcher pretendono, e lì il marchio è rimpicciolito fino a stare nel cerchio sicuro.
 
 Dove il marchio poggia sul fondo pagina serve `text-accent` sul componente: la sagoma è
 `currentColor`, quindi senza quella classe eredita il colore del testo ed esce bianca in tema
@@ -379,13 +389,20 @@ scuro.
 
 ```bash
 npm run logo:trace     # rigenera i tracciati dal riferimento (serve python + potracer)
-npm run logo:preview   # controlla le varie dimensioni su fondo chiaro e scuro
-npm run build:icons    # rigenera i PNG in public/icons/
+npm run build:brand    # rigenera favicon, icone app e immagine di condivisione
+npm run logo:preview   # controlla a occhio le varie dimensioni, su fondo chiaro e scuro
 ```
 
 > Nota: i tracciati sono dati, non geometria scritta a mano. Per cambiarli si modifica
-> `docs/logo/riferimento.jpg` e si rilancia `npm run logo:trace`: `logo-paths.json`, `public/logo.svg`
-> e le due icone vengono riscritti insieme, così i quattro file non possono divergere.
+> `docs/logo/riferimento.jpg` e si rilancia `npm run logo:trace` (riscrive `logo-paths.json` e
+> `public/logo.svg`) e poi `npm run build:brand` (riscrive tutti gli asset raster). Se uno dei due
+> passi non viene rifatto, `build:icons` si ferma invece di generare icone che non somigliano più
+> al marchio.
+
+**Anteprima dei link condivisi.** `layout.tsx` dichiara `metadataBase` (da `NEXT_PUBLIC_SITE_URL`)
+e i titoli `openGraph`/`twitter`; l'immagine, le sue dimensioni e l'alt text li prende Next dalle
+convenzioni in `src/app/` (`opengraph-image.png`, `opengraph-image.alt.txt`), così vale per tutte le
+pagine senza doverli ripetere.
 
 ---
 
