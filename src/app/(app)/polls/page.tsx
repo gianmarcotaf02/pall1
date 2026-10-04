@@ -125,8 +125,9 @@ export default async function PollsPage() {
       ) : null}
 
       <p className="mt-6 text-[12px] text-muted">
-        Un sondaggio può riferirsi a una settimana — le opzioni diventano i suoi sette giorni con la
-        data vera — e i sondaggi aperti si raggruppano per settimana. Tutti vedono chi ha votato cosa.
+        Un sondaggio può riferirsi a una settimana — le opzioni diventano i suoi giorni (lunedì–sabato)
+        con la data vera, e ogni giorno porta il suo sottosondaggio sugli orari — e i sondaggi aperti si
+        raggruppano per settimana. Tutti vedono chi ha votato cosa.
       </p>
     </>
   );
