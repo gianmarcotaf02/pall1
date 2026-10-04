@@ -70,8 +70,9 @@ export function PollBestSlots({
       </p>
 
       <ul className="space-y-3.5">
-        {slots.map((slot, index) => {
-          const isBest = index === 0;
+        {slots.map((slot) => {
+          // A pari merito il badge e la barra piena vanno a tutte le fasce in testa.
+          const isBest = top > 0 && slot.voters.length === top;
           const width = top > 0 ? Math.max(6, Math.round((slot.voters.length / top) * 100)) : 0;
 
           return (
