@@ -453,6 +453,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_admin: boolean
+          is_organizer: boolean
           jersey_number: number | null
           nickname: string
           notes: string | null
@@ -466,6 +467,7 @@ export type Database = {
           id: string
           is_active?: boolean
           is_admin?: boolean
+          is_organizer?: boolean
           jersey_number?: number | null
           nickname: string
           notes?: string | null
@@ -479,6 +481,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_admin?: boolean
+          is_organizer?: boolean
           jersey_number?: number | null
           nickname?: string
           notes?: string | null
@@ -620,6 +623,7 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      is_organizer: { Args: never; Returns: boolean }
     }
     Enums: {
       attendance_status: "present" | "absent" | "maybe"
