@@ -276,10 +276,6 @@ export async function broadcastToSubscribers(message: Broadcast): Promise<number
   return broadcast({ ...message, kind: "match", refId: null, expiresAt: null });
 }
 
-/* ------------------------------------------------------------------ */
-/* Recupero: chi collega il bot dopo                                   */
-/* ------------------------------------------------------------------ */
-
 /** Un avviso è ancora attuale? Sondaggio aperto, partita non ancora giocata. */
 async function stillRelevant(admin: Admin, notifications: NotificationRow[]) {
   const pollIds = notifications.filter((n) => n.kind === "poll" && n.ref_id).map((n) => n.ref_id!);
