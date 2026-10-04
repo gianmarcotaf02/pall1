@@ -11,20 +11,21 @@ Cosa produce, tutto da un'unica esecuzione:
 
   src/components/brand/logo-paths.json   i tracciati `d`, in viewBox 512x512
   public/logo.svg                        marchio completo, `currentColor`
-  public/icon.svg                        icona app: tassello verde + marchio
-  public/icon-maskable.svg               icona maskable (marchio entro l'80%)
 
-I tracciati sono tre:
+I tracciati sono due:
 
-  hull      sagoma verde piena (marcature del campo comprese). La tacca della
+  hull      sagoma piena (marcature del campo comprese). La tacca della
             bandierina resta un **vuoto vero**: la punta è un pezzo staccato,
             quindi su qualunque fondo si vede il fondo, non un cerchio colorato.
   markings  pallone e marcature del campo (crema): dipinti sopra la sagoma.
-  compact   la sagoma senza la base, per icona app e barra in alto.
 
 I buchi "semantici" (tacca e fessure della base) non vanno riempiti: si
 riempiono solo le marcature del campo, che sono dentro lo stelo, e i pentagoni
 del pallone.
+
+Gli altri file del marchio (favicon, icone app, immagine di condivisione) non
+sono scritti qui: si generano da questi tracciati con `npm run build:brand`, così
+usano per forza la stessa geometria e gli stessi colori dell'app.
 
 Requisiti (non sono dipendenze del progetto, servono solo a rigenerare):
 
@@ -59,7 +60,6 @@ STEM_X = (853, 1266)  # lo stelo: dentro questa fascia ci sono solo marcature
 BASE_Y = 1493  # sotto questa quota comincia la base a tre pezzi
 
 CREAM = "#f5fcf6"
-TILE = "#09782b"
 
 
 def ink_mask(img: np.ndarray) -> np.ndarray:
@@ -76,7 +76,7 @@ def fill_enclosed_holes(mask: np.ndarray) -> np.ndarray:
     return (mask | holes.astype(np.uint8)).astype(np.uint8)
 
 
-def build_masks() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def build_masks() -> tuple[np.ndarray, np.ndarray]:
     img = np.array(Image.open(SOURCE).convert("RGB"))
     if img.shape[:2] != (2048, 2048):
         raise SystemExit(f"il riferimento deve essere 2048x2048, è {img.shape[:2]}")
@@ -95,13 +95,11 @@ def build_masks() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     markings = ((pentagons | ((1 - ink) & stem_band)) > 0).astype(np.uint8)
 
     hull = ((ink | markings) > 0).astype(np.uint8)
-    compact = hull.copy()
-    compact[BASE_Y:, :] = 0
 
-    for name, mask in (("hull", hull), ("markings", markings), ("compact", compact)):
+    for name, mask in (("hull", hull), ("markings", markings)):
         if mask.sum() == 0:
             raise SystemExit(f"maschera {name} vuota: il riferimento è cambiato?")
-    return hull, markings, compact
+    return hull, markings
 
 
 def trace(mask: np.ndarray, transform) -> str:
@@ -151,17 +149,14 @@ def svg(body: str) -> str:
 
 
 def main() -> None:
-    hull, markings, compact = build_masks()
+    hull, markings = build_masks()
 
-    # Il marchio completo tiene il margine verticale del riferimento (16,6%);
-    # la versione compact sta dentro l'80% della tessera (zona sicura maskable).
+    # Il marchio conserva il margine verticale del riferimento (16,6%).
     d_hull = trace(hull, fitter(hull, 0.166))
     d_markings = trace(markings, fitter(hull, 0.166))
-    d_compact = trace(compact, fitter(compact, 0.13))
 
     PATHS_JSON.write_text(
-        json.dumps({"hull": d_hull, "markings": d_markings, "compact": d_compact}, indent=2)
-        + "\n"
+        json.dumps({"hull": d_hull, "markings": d_markings}, indent=2) + "\n"
     )
 
     (ROOT / "public" / "logo.svg").write_text(
@@ -172,23 +167,9 @@ def main() -> None:
         )
     )
 
-    label = '  <title>Pall1</title>\n'
-    (ROOT / "public" / "icon.svg").write_text(
-        svg(
-            label
-            + f'  <rect width="512" height="512" rx="115" fill="{TILE}"/>\n'
-            + f'  <path fill="{CREAM}" d="{d_compact}"/>\n',
-        )
-    )
-    (ROOT / "public" / "icon-maskable.svg").write_text(
-        svg(
-            label + f'  <rect width="512" height="512" fill="{TILE}"/>\n' + f'  <path fill="{CREAM}" d="{d_compact}"/>\n',
-        )
-    )
-
-    for name, d in (("hull", d_hull), ("markings", d_markings), ("compact", d_compact)):
+    for name, d in (("hull", d_hull), ("markings", d_markings)):
         print(f"{name}: {len(d)} caratteri")
-    print(f"scritti {PATHS_JSON.relative_to(ROOT)} e public/{{logo,icon,icon-maskable}}.svg")
+    print(f"scritti {PATHS_JSON.relative_to(ROOT)} e public/logo.svg")
 
 
 if __name__ == "__main__":
