@@ -271,12 +271,10 @@ async function broadcast(
   return results.filter(Boolean).length;
 }
 
-/** Manda lo stesso messaggio a tutte le chat iscritte e attive. */
-export async function broadcastToSubscribers(message: Broadcast): Promise<number> {
-  return broadcast({ ...message, kind: "match", refId: null, expiresAt: null });
-}
-
-/** Un avviso è ancora attuale? Sondaggio aperto, partita non ancora giocata. */
+/**
+ * Un avviso è ancora attuale? Sondaggio ancora aperto, partita non ancora
+ * giocata (e non cancellata).
+ */
 async function stillRelevant(admin: Admin, notifications: NotificationRow[]) {
   const pollIds = notifications.filter((n) => n.kind === "poll" && n.ref_id).map((n) => n.ref_id!);
   const matchIds = notifications
@@ -391,12 +389,17 @@ export async function notifyNewPoll(poll: {
   question: string;
   details: string | null;
   creator: string;
-}): Promise<void> {
+  /** Chiusura automatica: oltre quella data l'avviso non si recupera più. */
+  closesAt: string | null;
+}): Promise<number> {
   const lines = ["📊 <b>Nuovo sondaggio</b>", escapeTelegramHtml(poll.question)];
   if (poll.details) lines.push(`<i>${escapeTelegramHtml(poll.details)}</i>`);
   lines.push(`👤 Creato da ${escapeTelegramHtml(poll.creator)}`);
 
-  await broadcastToSubscribers({
+  return broadcast({
+    kind: "poll",
+    refId: poll.id,
+    expiresAt: poll.closesAt,
     text: lines.join("\n"),
     button: { label: "Apri il sondaggio", url: openInBrowserUrl(`/polls/${poll.id}`) },
   });
@@ -408,7 +411,7 @@ export async function notifyNewMatch(match: {
   matchDate: string;
   location: string;
   creator: string;
-}): Promise<void> {
+}): Promise<number> {
   const text = [
     "⚽ <b>Nuova partita</b>",
     `🗓 ${formatMatchDate(match.matchDate)}`,
@@ -417,7 +420,10 @@ export async function notifyNewMatch(match: {
     `👤 Creata da ${escapeTelegramHtml(match.creator)}`,
   ].join("\n");
 
-  await broadcastToSubscribers({
+  return broadcast({
+    kind: "match",
+    refId: match.id,
+    expiresAt: match.matchDate,
     text,
     button: { label: "Conferma la partita", url: openInBrowserUrl(`/matches/${match.id}`) },
   });
@@ -442,7 +448,10 @@ export async function notifyMatchReminder(match: {
     "Hai già confermato? Se non puoi più, ricordati di liberare il posto.",
   ].join("\n");
 
-  return broadcastToSubscribers({
+  return broadcast({
+    kind: "match_reminder",
+    refId: match.id,
+    expiresAt: match.matchDate,
     text,
     button: { label: "Confermo la mia presenza", url: openInBrowserUrl(`/matches/${match.id}`) },
   });
@@ -460,7 +469,7 @@ export async function notifyMatchFold(input: {
 }): Promise<number> {
   if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
 
-  const admin = createSupabaseAdminClient();
+  const admin = adminClient();
   if (!admin) return 0;
 
   const [{ data: match }, { data: players }] = await Promise.all([
@@ -485,7 +494,12 @@ export async function notifyMatchFold(input: {
     `📍 ${escapeTelegramHtml(match.location)}`,
   ].join("\n");
 
-  return sendToProfiles(teammates, {
+  return broadcast({
+    kind: "match_fold",
+    refId: input.matchId,
+    expiresAt: match.match_date,
+    audience: "profiles",
+    profileIds: teammates,
     text,
     button: { label: "Apri la partita", url: openInBrowserUrl(`/matches/${input.matchId}`) },
   });
