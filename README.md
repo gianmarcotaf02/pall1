@@ -158,6 +158,25 @@ subito chi non è su Telegram mobile; a chi lo è offre l'uscita verso il browse
 (`Telegram.WebApp.openLink()` dentro una Mini App, `intent://` su Android, istruzioni su iOS,
 dove una pagina web non può forzare Safari).
 
+### 1.8 Promemoria partita ~12 ore prima
+
+Non usa i cron di Vercel: sul piano **Hobby** il minimo è **una volta al giorno** (la
+precisione è per ora, ±59 min), troppo grossolano per un promemoria a 12 ore. Il timer vive
+in Postgres: **`pg_cron`** scatta ogni 30 minuti e **`pg_net`** chiama
+`/api/cron/match-reminders`, che manda il messaggio e segna `matches.reminder_sent_at`
+(così una partita si avvisa una volta sola).
+
+È tutto dentro la migrazione `…_match_reminders`, quindi non c'è niente da configurare a mano.
+Per controllare il job:
+
+```sql
+select jobname, schedule, active from cron.job;
+select * from net._http_response order by created desc limit 5;  -- esiti delle chiamate
+```
+
+> Se cambi dominio, aggiorna l'URL dentro il job `pall1-match-reminders` (è nel corpo della
+> migrazione `…_match_reminders`) e riprogrammalo con `cron.schedule`.
+
 ---
 
 ```bash
