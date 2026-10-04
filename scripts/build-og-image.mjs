@@ -106,7 +106,10 @@ const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><style>
 </body></html>`;
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 });
+const page = await browser.newPage({
+  viewport: { width: WIDTH, height: HEIGHT },
+  deviceScaleFactor: 1,
+});
 await page.setContent(html, { waitUntil: "load" });
 // Aspetta che i font incorporati siano applicati: senza questo lo screenshot
 // può uscire con la sans di sistema.
@@ -122,5 +125,7 @@ const alt =
   "accanto al titolo «Il calcetto del gruppo, finalmente in ordine».";
 writeFileSync(resolve(ROOT, "src/app/opengraph-image.alt.txt"), `${alt}\n`);
 
-console.log(`src/app/opengraph-image.png · ${WIDTH}×${HEIGHT} · ${(buffer.length / 1024).toFixed(1)} kB`);
+console.log(
+  `src/app/opengraph-image.png · ${WIDTH}×${HEIGHT} · ${(buffer.length / 1024).toFixed(1)} kB`,
+);
 console.log(`colori: carta ${tokens.paper} · accento ${tokens.accent} · crema ${CREAM}`);

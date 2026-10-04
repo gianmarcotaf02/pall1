@@ -84,7 +84,9 @@ describe("marchio", () => {
       width: 1200,
       height: 630,
     });
-    expect(read("../../src/app/opengraph-image.alt.txt").toString().trim().length).toBeGreaterThan(20);
+    expect(read("../../src/app/opengraph-image.alt.txt").toString().trim().length).toBeGreaterThan(
+      20,
+    );
   });
 
   it("il manifest punta a file che esistono", () => {

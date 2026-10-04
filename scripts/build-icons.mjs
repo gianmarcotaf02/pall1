@@ -51,7 +51,10 @@ const browser = await chromium.launch();
 
 /** Screenshot di un SVG quadrato, con o senza fondo. */
 async function render(svg, { size, background = "transparent" }) {
-  const page = await browser.newPage({ viewport: { width: size, height: size }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({
+    viewport: { width: size, height: size },
+    deviceScaleFactor: 1,
+  });
   await page.setContent(svgPage(svg, { size, background }), { waitUntil: "load" });
   const buffer = await page.screenshot({ omitBackground: background === "transparent" });
   await page.close();
@@ -130,7 +133,12 @@ const maskableSvg = markSvg(paths, {
 const TARGETS = [
   { svg: tileSvg, file: "public/icons/icon-192.png", size: 192, background: "transparent" },
   { svg: tileSvg, file: "public/icons/icon-512.png", size: 512, background: "transparent" },
-  { svg: maskableSvg, file: "public/icons/icon-maskable-512.png", size: 512, background: tokens.paper },
+  {
+    svg: maskableSvg,
+    file: "public/icons/icon-maskable-512.png",
+    size: 512,
+    background: tokens.paper,
+  },
   { svg: maskableSvg, file: "src/app/apple-icon.png", size: 180, background: tokens.paper },
 ];
 

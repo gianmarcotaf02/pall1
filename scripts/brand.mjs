@@ -25,9 +25,7 @@ export const CREAM = "#f5fcf6";
 
 /** Geometria del marchio in viewBox 512×512. */
 export function readLogoPaths() {
-  return JSON.parse(
-    readFileSync(resolve(ROOT, "src/components/brand/logo-paths.json"), "utf8"),
-  );
+  return JSON.parse(readFileSync(resolve(ROOT, "src/components/brand/logo-paths.json"), "utf8"));
 }
 
 /* ------------------------------------------------------------------ colori */

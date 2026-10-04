@@ -25,7 +25,8 @@ const mark = (color, size) =>
     `<svg style="width:${size}px;height:${size}px"`,
   );
 
-const figure = (content, caption) => `<figure>${content}<figcaption>${caption}</figcaption></figure>`;
+const figure = (content, caption) =>
+  `<figure>${content}<figcaption>${caption}</figcaption></figure>`;
 
 const row = (items) => `<div class="row">${items.join("")}</div>`;
 
@@ -45,7 +46,8 @@ const favicon = (color, size) =>
 const faviconRow = (color) =>
   row([16, 20, 24, 32, 48, 64].map((size) => figure(favicon(color, size), size)));
 
-const png = (file) => `data:image/png;base64,${readFileSync(resolve(ROOT, file)).toString("base64")}`;
+const png = (file) =>
+  `data:image/png;base64,${readFileSync(resolve(ROOT, file)).toString("base64")}`;
 
 const appIcons = row([
   figure(`<img src="${png("public/icons/icon-192.png")}" width="96" height="96">`, "PWA 192"),
@@ -86,7 +88,10 @@ mkdirSync(resolve(ROOT, "tmp"), { recursive: true });
 writeFileSync(resolve(ROOT, "tmp/logo-preview.html"), sheet);
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1180, height: 620 }, deviceScaleFactor: 2 });
+const page = await browser.newPage({
+  viewport: { width: 1180, height: 620 },
+  deviceScaleFactor: 2,
+});
 await page.setContent(sheet, { waitUntil: "load" });
 await page.screenshot({ path: resolve(ROOT, "tmp/logo-preview.png"), fullPage: true });
 await browser.close();
