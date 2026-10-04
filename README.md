@@ -257,14 +257,17 @@ src/
 │  ├─ match/           pannello partita, controllo presenza
 │  ├─ positions/       campo 2D, selettore posizioni, pastiglie
 │  ├─ polls/           card, risultati cliccabili, form di creazione
+│  ├─ profile/         dati giocatore, avatar, collegamento Telegram
 │  ├─ admin/           form e pannelli di gestione
 │  └─ …
 ├─ lib/
-│  ├─ actions/         Server Actions (auth, profilo, iscrizioni, sondaggi, admin)
-│  ├─ supabase/        client server-side + refresh in proxy
+│  ├─ actions/         Server Actions (auth, profilo, iscrizioni, sondaggi, telegram, admin)
+│  ├─ supabase/        client server-side, client service-role, refresh in proxy
 │  ├─ queries.ts       letture tipizzate
 │  ├─ positions.ts     catalogo posizioni + coordinate (rispecchia la tabella `positions`)
 │  ├─ week.ts          settimane lunedì→domenica, fuso di Roma, etichette
+│  ├─ poll-times.ts    orari dei sottosondaggi (feriali 18–21, sabato 15:30–18:30)
+│  ├─ telegram.ts      invio messaggi e notifiche di dominio
 │  ├─ validation/      schemi Zod
 │  └─ errors.ts        traduzione errori Postgres/trigger in italiano
 ├─ proxy.ts            refresh sessione + guardia rotte (ex middleware)
