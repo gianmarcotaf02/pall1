@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { IconTelegram, IconX } from "@/components/icons";
 
@@ -79,13 +78,14 @@ export function TelegramBanner() {
         Attiva gli avvisi su Telegram per partite e sondaggi.
       </p>
 
-      <Link
+      {/* Ancoraggio nativo, non <Link>: la route risponde con un redirect a
+          Telegram, e il router client di Next non lo seguirebbe. */}
+      <a
         href="/api/telegram/link"
-        prefetch={false}
         className="shrink-0 text-[12.5px] font-medium text-accent-text hover:underline"
       >
         Collega
-      </Link>
+      </a>
 
       <button
         type="button"
