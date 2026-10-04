@@ -102,6 +102,15 @@ export async function sendTelegramMessage(
 
 type Broadcast = { text: string; button?: Button };
 
+async function deliverToChatIds(chatIds: number[], message: Broadcast): Promise<number> {
+  if (chatIds.length === 0) return 0;
+
+  const results = await Promise.allSettled(
+    chatIds.map((chatId) => sendTelegramMessage(chatId, message.text, { button: message.button })),
+  );
+  return results.filter((result) => result.status === "fulfilled" && result.value).length;
+}
+
 /** Manda lo stesso messaggio a tutte le chat iscritte e attive. */
 export async function broadcastToSubscribers(message: Broadcast): Promise<number> {
   if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
@@ -114,13 +123,23 @@ export async function broadcastToSubscribers(message: Broadcast): Promise<number
     .select("chat_id")
     .eq("notifications_enabled", true);
 
-  const chatIds = (data ?? []).map((row) => row.chat_id);
-  if (chatIds.length === 0) return 0;
+  return deliverToChatIds((data ?? []).map((row) => row.chat_id), message);
+}
 
-  const results = await Promise.allSettled(
-    chatIds.map((chatId) => sendTelegramMessage(chatId, message.text, { button: message.button })),
-  );
-  return results.filter((result) => result.status === "fulfilled" && result.value).length;
+/** Manda il messaggio solo alle chat dei profili indicati (es. i compagni di partita). */
+async function sendToProfiles(profileIds: string[], message: Broadcast): Promise<number> {
+  if (!process.env.TELEGRAM_BOT_TOKEN || profileIds.length === 0) return 0;
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return 0;
+
+  const { data } = await admin
+    .from("telegram_subscribers")
+    .select("chat_id")
+    .eq("notifications_enabled", true)
+    .in("profile_id", profileIds);
+
+  return deliverToChatIds((data ?? []).map((row) => row.chat_id), message);
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,5 +180,73 @@ export async function notifyNewMatch(match: {
   await broadcastToSubscribers({
     text,
     button: { label: "Conferma la partita", url: openInBrowserUrl(`/matches/${match.id}`) },
+  });
+}
+
+/**
+ * Promemoria ~12 ore prima: lo manda il cron, a tutti gli iscritti.
+ * Serve a ricordare di confermare la presenza.
+ */
+export async function notifyMatchReminder(match: {
+  id: string;
+  format: MatchFormat;
+  matchDate: string;
+  location: string;
+}): Promise<number> {
+  const text = [
+    "⏰ <b>Si gioca tra circa 12 ore</b>",
+    `🗓 ${formatMatchDate(match.matchDate)}`,
+    `📍 ${escapeTelegramHtml(match.location)}`,
+    FORMAT_LABELS[match.format],
+    "",
+    "Hai già confermato? Se non puoi più, ricordati di liberare il posto.",
+  ].join("\n");
+
+  return broadcastToSubscribers({
+    text,
+    button: { label: "Confermo la mia presenza", url: openInBrowserUrl(`/matches/${match.id}`) },
+  });
+}
+
+/**
+ * Forfait: avvisa **solo** chi è in quella partita, non tutto il gruppo.
+ * La lista dei giocatori è `match_players`: la riga di chi dà forfait viene
+ * cancellata prima di chiamare questa funzione, ma ci si protegge comunque.
+ */
+export async function notifyMatchFold(input: {
+  matchId: string;
+  folderProfileId: string;
+  folderNickname: string;
+}): Promise<number> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return 0;
+
+  const [{ data: match }, { data: players }] = await Promise.all([
+    admin
+      .from("matches")
+      .select("match_date, location")
+      .eq("id", input.matchId)
+      .maybeSingle(),
+    admin.from("match_players").select("profile_id").eq("match_id", input.matchId),
+  ]);
+
+  if (!match) return 0;
+
+  const teammates = (players ?? [])
+    .map((row) => row.profile_id)
+    .filter((id) => id !== input.folderProfileId);
+
+  const text = [
+    "❌ <b>Ha dato forfait</b>",
+    `${escapeTelegramHtml(input.folderNickname)} ha liberato il posto.`,
+    `🗓 ${formatMatchDate(match.match_date)}`,
+    `📍 ${escapeTelegramHtml(match.location)}`,
+  ].join("\n");
+
+  return sendToProfiles(teammates, {
+    text,
+    button: { label: "Apri la partita", url: openInBrowserUrl(`/matches/${input.matchId}`) },
   });
 }
