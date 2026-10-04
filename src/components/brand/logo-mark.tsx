@@ -23,9 +23,11 @@
  *
  * Il colore della sagoma è `currentColor`: dove il marchio sta su fondo pagina
  * va dato `text-accent`, altrimenti eredita il colore del testo (e in tema scuro
- * esce bianco). Il terzo tracciato del riferimento, `compact` (sagoma senza
- * base), non è usato qui: serve solo all'icona app, dove a 16-192px pallone e
- * marcature diventano una macchia.
+ * esce bianco).
+ *
+ * Favicon, icone app e immagine di condivisione non ridisegnano niente: leggono
+ * questi stessi tracciati e i token di colore di `globals.css`
+ * (`scripts/brand.mjs`), quindi sono lo stesso marchio che si vede in pagina.
  */
 
 import paths from "./logo-paths.json";
