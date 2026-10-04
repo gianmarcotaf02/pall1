@@ -75,6 +75,7 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
     format: parsed.data.format,
     matchDate,
     location: parsed.data.location,
+    creator: admin.nickname,
   }).catch(() => {});
 
   revalidateMatch(data.id);

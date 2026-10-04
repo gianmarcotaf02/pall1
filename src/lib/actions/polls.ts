@@ -161,6 +161,7 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
     id: poll.id,
     question: parsed.data.question,
     details: parsed.data.details?.trim() ? parsed.data.details.trim() : null,
+    creator: profile.nickname,
   }).catch(() => {});
 
   revalidatePolls(poll.id);
