@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { setTelegramNotificationsAction, unlinkTelegramAction } from "@/lib/actions/telegram";
+import { setTelegramAction } from "@/lib/actions/telegram";
 import { buttonClass } from "@/components/ui/button";
 import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import { FormMessage } from "@/components/ui/form-message";
@@ -17,8 +17,7 @@ export function TelegramNotifications({
   subscription: TelegramSubscription | null;
   configured: boolean;
 }) {
-  const [toggleState, toggleAction] = useActionState(setTelegramNotificationsAction, null);
-  const [unlinkState, unlinkAction] = useActionState(unlinkTelegramAction, null);
+  const [state, action] = useActionState(setTelegramAction, null);
 
   if (!configured) {
     return (
@@ -39,7 +38,7 @@ export function TelegramNotifications({
           <IconTelegram className="size-4" />
           Collega Telegram
         </Link>
-        <FormMessage state={toggleState} />
+        <FormMessage state={state} />
       </div>
     );
   }
@@ -68,7 +67,7 @@ export function TelegramNotifications({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <form action={toggleAction}>
+        <form action={action}>
           <input type="hidden" name="enabled" value={subscription.enabled ? "false" : "true"} />
           <SubmitButton variant="secondary" size="sm" pendingLabel="Aggiornamento…">
             <IconBell className="size-4" />
@@ -76,15 +75,15 @@ export function TelegramNotifications({
           </SubmitButton>
         </form>
 
-        <form action={unlinkAction}>
+        <form action={action}>
+          <input type="hidden" name="intent" value="unlink" />
           <ConfirmSubmit message="Scollegare Telegram? Non riceverai più notifiche da Pall1.">
             Scollega
           </ConfirmSubmit>
         </form>
       </div>
 
-      <FormMessage state={toggleState} />
-      <FormMessage state={unlinkState} />
+      <FormMessage state={state} />
     </div>
   );
 }
