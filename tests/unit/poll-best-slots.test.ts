@@ -17,7 +17,15 @@ function option(
 }
 
 function timeOption(id: string, label: string, voters: PollVoter[]): PollOptionResult {
-  return { id, label, startsAt: `2026-10-05T${label}`, sortOrder: 0, voters, subPoll: null };
+  // Come dal DB: `starts_at` è in UTC. Le 20:00 di Roma (ora legale) sono le 18:00Z.
+  return {
+    id,
+    label,
+    startsAt: `2026-10-05T${label}:00+02:00`,
+    sortOrder: 0,
+    voters,
+    subPoll: null,
+  };
 }
 
 function subPoll(id: string, options: PollOptionResult[]): PollSubPoll {
@@ -73,11 +81,11 @@ describe("bestPollSlots", () => {
   it("ordina per numero di persone e restituisce al massimo 3 fasce", () => {
     const slots = bestPollSlots(
       poll([
-        option("d1", "Lunedì", [voter("A"), voter("B")], subPoll("s1", [timeOption("t1", "20:00", [voter("A")])]), "2026-10-05T20:00"),
+        option("d1", "Lunedì", [voter("A"), voter("B")], subPoll("s1", [timeOption("t1", "20:00", [voter("A")])]), "2026-10-05T20:00+02:00"),
         option("d2", "Martedì", [voter("A"), voter("B"), voter("C")], subPoll("s2", [
           timeOption("t2", "21:00", [voter("A"), voter("B"), voter("C")]),
           timeOption("t3", "18:00", [voter("A"), voter("B")]),
-        ]), "2026-10-06T20:00"),
+        ]), "2026-10-06T20:00+02:00"),
       ]),
     );
 
@@ -107,6 +115,20 @@ describe("bestPollSlots", () => {
     expect(slots).toHaveLength(1);
     expect(slots[0].time).toBeNull();
     expect(slots[0].voters).toHaveLength(2);
+  });
+
+  it("mostra l'ora di Roma, non quella UTC di starts_at", () => {
+    const slots = bestPollSlots(
+      poll([
+        option("d1", "Lunedì", [voter("A")], subPoll("s1", [
+          // 17:30Z = 19:30 a Roma (ora legale).
+          { id: "t1", label: "19:30", startsAt: "2026-10-05T17:30:00+00:00", sortOrder: 0, voters: [voter("A")], subPoll: null },
+        ])),
+      ]),
+    );
+
+    expect(slots[0].time).toBe("19:30");
+    expect(slots[0].primary).toBe("Lun 5 ott");
   });
 
   it("scarta le fasce senza nessun disponibile", () => {
