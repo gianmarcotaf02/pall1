@@ -173,6 +173,7 @@ export type Database = {
           match_date: string
           max_players: number
           notes: string | null
+          reminder_sent_at: string | null
           status: Database["public"]["Enums"]["match_status"]
           team_a_name: string
           team_b_name: string
@@ -187,6 +188,7 @@ export type Database = {
           match_date: string
           max_players?: number
           notes?: string | null
+          reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["match_status"]
           team_a_name?: string
           team_b_name?: string
@@ -201,6 +203,7 @@ export type Database = {
           match_date?: string
           max_players?: number
           notes?: string | null
+          reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["match_status"]
           team_a_name?: string
           team_b_name?: string
