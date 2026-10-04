@@ -18,8 +18,7 @@ const outDir = resolve(ROOT, "public/icons");
 const SIZE = 512;
 
 /** Sfondo carta (tema chiaro) e verde del marchio, come in `app-shell`. */
-const PAPER = readBrandTokens().paper;
-const ACCENT = readBrandTokens().accent;
+const { paper: PAPER, accent: ACCENT } = readBrandTokens();
 
 const rawSvg = readFileSync(resolve(ROOT, "public/logo.svg"), "utf8").replace(/<\?xml[^>]*\?>/, "");
 
@@ -36,7 +35,7 @@ const VARIANTS = [
     // Marchio invertito: sagoma crema, marcature verdi (come un'icona app).
     // Prima le marcature, poi il colore ereditato: dopo il primo replace i due
     // path avrebbero lo stesso fill e non si distinguerebbero più.
-    svg: rawSvg.replace(/fill="#f5fcf6"/g, `fill="${ACCENT}"`).replace(/currentColor/g, CREAM),
+    svg: rawSvg.replace(new RegExp(CREAM, "gi"), ACCENT).replace(/currentColor/g, CREAM),
   },
 ];
 
