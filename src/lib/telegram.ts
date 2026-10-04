@@ -1,7 +1,8 @@
 import { formatMatchDate } from "@/lib/format";
 import { FORMAT_LABELS } from "@/lib/positions";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { Database, MatchFormat } from "@/types/domain";
+import type { Database } from "@/types/database.types";
+import type { MatchFormat } from "@/types/domain";
 
 /**
  * Invio delle notifiche Telegram.
@@ -30,8 +31,9 @@ const CATCH_UP_SPACING_MS = 600;
 
 const adminClient = () => createSupabaseAdminClient();
 
-type Admin = ReturnType<typeof createSupabaseAdminClient>;
-type NotificationKind = Database["public"]["Enums"] extends never ? never : "poll" | "match" | "match_reminder" | "match_fold";
+type Admin = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
+type NotificationRow = Database["public"]["Tables"]["telegram_notifications"]["Row"];
+type NotificationKind = NotificationRow["kind"];
 
 export function telegramBotUsername(): string | null {
   const username = process.env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "");
@@ -138,44 +140,250 @@ export async function sendTelegramMessage(
 
 type Broadcast = { text: string; button?: Button };
 
-async function deliverToChatIds(chatIds: number[], message: Broadcast): Promise<number> {
-  if (chatIds.length === 0) return 0;
+/* ------------------------------------------------------------------ */
+/* Registro degli invii                                                */
+/* ------------------------------------------------------------------ */
 
-  const results = await Promise.allSettled(
-    chatIds.map((chatId) => sendTelegramMessage(chatId, message.text, { button: message.button })),
+/**
+ * Tiene traccia dell'esito di un invio: riga in `telegram_deliveries` (chi ha
+ * ricevuto l'avviso) e ultimo esito sulla riga dell'iscritto.
+ *
+ * Un `403` significa che Telegram non può più scrivere a quella chat (bot
+ * bloccato, utente disattivato): l'iscrizione va messa in pausa, così il
+ * profilo lo dice all'utente e non si continua a sprecare invii.
+ */
+async function recordDelivery(
+  admin: Admin,
+  notificationId: string,
+  chatId: number,
+  result: TelegramSendResult,
+) {
+  const now = new Date().toISOString();
+
+  await admin.from("telegram_deliveries").upsert(
+    {
+      notification_id: notificationId,
+      chat_id: chatId,
+      sent_at: now,
+      ok: result.ok,
+      error: result.error,
+    },
+    { onConflict: "notification_id,chat_id" },
   );
-  return results.filter((result) => result.status === "fulfilled" && result.value).length;
+
+  if (result.ok) {
+    await admin
+      .from("telegram_subscribers")
+      .update({ last_sent_at: now, last_error: null, last_error_at: null })
+      .eq("chat_id", chatId);
+    return;
+  }
+
+  console.error(`[telegram] invio a ${chatId} fallito: ${result.status ?? "-"} ${result.error ?? ""}`);
+
+  await admin
+    .from("telegram_subscribers")
+    .update({
+      last_error: result.error ?? "Errore sconosciuto",
+      last_error_at: now,
+      ...(result.status === 403 ? { notifications_enabled: false } : {}),
+    })
+    .eq("chat_id", chatId);
 }
 
-/** Manda lo stesso messaggio a tutte le chat iscritte e attive. */
-export async function broadcastToSubscribers(message: Broadcast): Promise<number> {
-  if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
+/** Invia un avviso a una chat e registra l'esito. `true` se è partito. */
+async function deliverNotification(
+  admin: Admin,
+  notification: Pick<NotificationRow, "id" | "text" | "button_label" | "button_url">,
+  chatId: number,
+): Promise<boolean> {
+  const button =
+    notification.button_label && notification.button_url
+      ? { label: notification.button_label, url: notification.button_url }
+      : undefined;
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return 0;
+  const result = await sendTelegramMessage(chatId, notification.text, { button });
+  await recordDelivery(admin, notification.id, chatId, result);
+  return result.ok;
+}
 
-  const { data } = await admin
+/** Chat attive a cui va un avviso: tutti, oppure solo i profili indicati. */
+async function targetChatIds(admin: Admin, audience: NotificationRow["audience"], profileIds: string[]) {
+  const query = admin
     .from("telegram_subscribers")
     .select("chat_id")
     .eq("notifications_enabled", true);
 
-  return deliverToChatIds((data ?? []).map((row) => row.chat_id), message);
+  const { data } =
+    audience === "profiles" ? await query.in("profile_id", profileIds) : await query;
+
+  return (data ?? []).map((row) => row.chat_id);
 }
 
-/** Manda il messaggio solo alle chat dei profili indicati (es. i compagni di partita). */
-async function sendToProfiles(profileIds: string[], message: Broadcast): Promise<number> {
-  if (!process.env.TELEGRAM_BOT_TOKEN || profileIds.length === 0) return 0;
+/**
+ * Registra l'avviso e lo manda a chi deve riceverlo. Ritorna quante chat hanno
+ * accettato il messaggio.
+ */
+async function broadcast(
+  input: Broadcast & {
+    kind: NotificationKind;
+    refId: string | null;
+    /** Dopo questo istante l'avviso non serve più (e non si recupera). */
+    expiresAt: string | null;
+    audience?: NotificationRow["audience"];
+    profileIds?: string[];
+  },
+): Promise<number> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
 
-  const admin = createSupabaseAdminClient();
+  const admin = adminClient();
   if (!admin) return 0;
 
-  const { data } = await admin
-    .from("telegram_subscribers")
-    .select("chat_id")
-    .eq("notifications_enabled", true)
-    .in("profile_id", profileIds);
+  const audience = input.audience ?? "all";
+  const profileIds = input.profileIds ?? [];
 
-  return deliverToChatIds((data ?? []).map((row) => row.chat_id), message);
+  const { data: notification, error } = await admin
+    .from("telegram_notifications")
+    .insert({
+      kind: input.kind,
+      ref_id: input.refId,
+      text: input.text,
+      button_label: input.button?.label ?? null,
+      button_url: input.button?.url ?? null,
+      audience,
+      profile_ids: profileIds,
+      expires_at: input.expiresAt,
+    })
+    .select("id, text, button_label, button_url")
+    .single();
+
+  if (error || !notification) {
+    console.error(`[telegram] avviso non registrato: ${error?.message ?? "nessuna riga"}`);
+    return 0;
+  }
+
+  const chatIds = await targetChatIds(admin, audience, profileIds);
+  if (chatIds.length === 0) return 0;
+
+  const results = await Promise.all(
+    chatIds.map((chatId) => deliverNotification(admin, notification, chatId)),
+  );
+  return results.filter(Boolean).length;
+}
+
+/** Manda lo stesso messaggio a tutte le chat iscritte e attive. */
+export async function broadcastToSubscribers(message: Broadcast): Promise<number> {
+  return broadcast({ ...message, kind: "match", refId: null, expiresAt: null });
+}
+
+/* ------------------------------------------------------------------ */
+/* Recupero: chi collega il bot dopo                                   */
+/* ------------------------------------------------------------------ */
+
+/** Un avviso è ancora attuale? Sondaggio aperto, partita non ancora giocata. */
+async function stillRelevant(admin: Admin, notifications: NotificationRow[]) {
+  const pollIds = notifications.filter((n) => n.kind === "poll" && n.ref_id).map((n) => n.ref_id!);
+  const matchIds = notifications
+    .filter((n) => n.kind !== "poll" && n.ref_id)
+    .map((n) => n.ref_id!);
+
+  const [polls, matches] = await Promise.all([
+    pollIds.length > 0
+      ? admin.from("polls").select("id, is_closed, closes_at").in("id", pollIds)
+      : Promise.resolve({ data: [] as { id: string; is_closed: boolean; closes_at: string | null }[] }),
+    matchIds.length > 0
+      ? admin.from("matches").select("id, match_date, status").in("id", matchIds)
+      : Promise.resolve({ data: [] as { id: string; match_date: string; status: string }[] }),
+  ]);
+
+  const openPolls = new Set(
+    (polls.data ?? [])
+      .filter(
+        (poll) =>
+          !poll.is_closed &&
+          (poll.closes_at === null || new Date(poll.closes_at).getTime() > Date.now()),
+      )
+      .map((poll) => poll.id),
+  );
+  const playableMatches = new Set(
+    (matches.data ?? [])
+      .filter(
+        (match) =>
+          (match.status === "scheduled" || match.status === "teams_set") &&
+          new Date(match.match_date).getTime() > Date.now(),
+      )
+      .map((match) => match.id),
+  );
+
+  return notifications.filter((notification) => {
+    if (!notification.ref_id) return true;
+    return notification.kind === "poll"
+      ? openPolls.has(notification.ref_id)
+      : playableMatches.has(notification.ref_id);
+  });
+}
+
+/**
+ * Rimanda a una chat gli avvisi ancora attuali che non ha mai ricevuto (o che
+ * le erano falliti). Serve a chi collega il bot dopo la creazione di un
+ * sondaggio o di una partita: prima non riceveva nulla di quanto già inviato.
+ */
+export async function sendMissedNotifications(chatId: number, profileId: string): Promise<number> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return 0;
+
+  const admin = adminClient();
+  if (!admin) return 0;
+
+  const since = new Date(Date.now() - CATCH_UP_WINDOW_DAYS * 86_400_000).toISOString();
+  const { data: candidates } = await admin
+    .from("telegram_notifications")
+    .select("*")
+    .gte("created_at", since)
+    .or(`audience.eq.all,profile_ids.cs.{${profileId}}`)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const now = Date.now();
+  const inWindow = (candidates ?? []).filter(
+    (notification) =>
+      notification.expires_at === null || new Date(notification.expires_at).getTime() > now,
+  );
+  if (inWindow.length === 0) return 0;
+
+  const { data: delivered } = await admin
+    .from("telegram_deliveries")
+    .select("notification_id")
+    .eq("chat_id", chatId)
+    .eq("ok", true)
+    .in(
+      "notification_id",
+      inWindow.map((notification) => notification.id),
+    );
+
+  const alreadySent = new Set((delivered ?? []).map((row) => row.notification_id));
+  const relevant = await stillRelevant(
+    admin,
+    inWindow.filter((notification) => !alreadySent.has(notification.id)),
+  );
+  if (relevant.length === 0) return 0;
+
+  // Dal più vecchio al più recente, e solo gli ultimi: niente raffiche.
+  const toSend = relevant.slice(0, CATCH_UP_MAX).reverse();
+
+  if (toSend.length > 1) {
+    await sendTelegramMessage(
+      chatId,
+      `📬 <b>Avvisi ancora attuali</b>\nEcco i ${toSend.length} messaggi che ti sei perso collegandoti dopo.`,
+    );
+  }
+
+  let sent = 0;
+  for (const notification of toSend) {
+    if (sent > 0) await new Promise((resolve) => setTimeout(resolve, CATCH_UP_SPACING_MS));
+    if (await deliverNotification(admin, notification, chatId)) sent += 1;
+  }
+
+  return sent;
 }
 
 /* ------------------------------------------------------------------ */
