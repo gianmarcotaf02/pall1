@@ -26,6 +26,8 @@ const SEND_TIMEOUT_MS = 5_000;
 const CATCH_UP_WINDOW_DAYS = 7;
 /** Tetto agli avvisi recuperati: meglio pochi che una raffica. */
 const CATCH_UP_MAX = 5;
+/** Dopo quanti giorni gli avvisi si possono buttare. */
+const NOTIFICATION_RETENTION_DAYS = 60;
 /** Telegram accetta ~1 messaggio al secondo per chat: li spaziamo. */
 const CATCH_UP_SPACING_MS = 600;
 
@@ -378,6 +380,24 @@ export async function sendMissedNotifications(chatId: number, profileId: string)
   }
 
   return sent;
+}
+
+/**
+ * Manutenzione del registro: gli avvisi oltre la finestra di recupero non
+ * servono più (le consegne collegate spariscono per cascata).
+ */
+export async function pruneOldNotifications(): Promise<number> {
+  const admin = adminClient();
+  if (!admin) return 0;
+
+  const cutoff = new Date(Date.now() - NOTIFICATION_RETENTION_DAYS * 86_400_000).toISOString();
+  const { data } = await admin
+    .from("telegram_notifications")
+    .delete()
+    .lt("created_at", cutoff)
+    .select("id");
+
+  return (data ?? []).length;
 }
 
 /* ------------------------------------------------------------------ */

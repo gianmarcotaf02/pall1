@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { notifyMatchReminder } from "@/lib/telegram";
-import { pruneOldNotifications } from "@/lib/telegram";
+import { notifyMatchReminder, pruneOldNotifications } from "@/lib/telegram";
 
 /**
  * Promemoria ~12 ore prima della partita.
