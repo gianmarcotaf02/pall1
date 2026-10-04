@@ -7,6 +7,7 @@ import { errorMessage, firstIssue } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { fromDatetimeLocalValue } from "@/lib/format";
 import { timeSlotsForDay } from "@/lib/poll-times";
+import { notifyNewPoll } from "@/lib/telegram";
 import { dayLabel, isSunday, weekdayName } from "@/lib/week";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { pollSchema, pollStatusSchema, pollVoteSchema } from "@/lib/validation/schemas";
@@ -154,6 +155,13 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
       return { error: errorMessage(subPollsError) };
     }
   }
+
+  // Avviso su Telegram: non deve mai far fallire la creazione.
+  await notifyNewPoll({
+    id: poll.id,
+    question: parsed.data.question,
+    details: parsed.data.details?.trim() ? parsed.data.details.trim() : null,
+  }).catch(() => {});
 
   revalidatePolls(poll.id);
   redirect(`/polls/${poll.id}`);

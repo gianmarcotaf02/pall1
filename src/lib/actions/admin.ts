@@ -9,6 +9,7 @@ import { fromDatetimeLocalValue } from "@/lib/format";
 import { positionByCode, roleGroupsOf } from "@/lib/positions";
 import { getMatchById, getRoster } from "@/lib/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { notifyNewMatch } from "@/lib/telegram";
 import {
   attendanceSchema,
   matchSchema,
@@ -67,6 +68,14 @@ export async function createMatchAction(_prev: FormState, formData: FormData): P
     .single();
 
   if (error) return { error: errorMessage(error) };
+
+  // Avviso su Telegram: non deve mai far fallire la creazione.
+  await notifyNewMatch({
+    id: data.id,
+    format: parsed.data.format,
+    matchDate,
+    location: parsed.data.location,
+  }).catch(() => {});
 
   revalidateMatch(data.id);
   redirect(`/admin/matches/${data.id}`);
