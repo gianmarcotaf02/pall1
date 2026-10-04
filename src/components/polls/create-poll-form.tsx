@@ -10,6 +10,7 @@ import {
   MAX_POLL_OPTIONS,
   MIN_POLL_OPTIONS,
 } from "@/lib/validation/schemas";
+import { timeSlotsForDay } from "@/lib/poll-times";
 import {
   addDays,
   pollDays,
@@ -32,14 +33,16 @@ function emptyRow(): Row {
   return { key: nextKey++, label: "", startsAt: "", withDate: false };
 }
 
-/** Ora di ritrovo predefinita per le opzioni generate dalla settimana. */
+/** Ora di ritrovo predefinita, se un giorno non ha orari proposti. */
 const DEFAULT_TIME = "21:00";
 
 function rowsForWeek(weekStart: string): Row[] {
   return pollDays(weekStart).map((day) => ({
     key: nextKey++,
     label: weekdayName(day),
-    startsAt: `${day}T${DEFAULT_TIME}`,
+    // Primo orario del giorno (feriali 18:00, sabato 15:30): la data vera
+    // serve a generare il sottosondaggio degli orari.
+    startsAt: timeSlotsForDay(day)[0]?.startsAt ?? `${day}T${DEFAULT_TIME}`,
     withDate: true,
   }));
 }
@@ -192,7 +195,8 @@ export function CreatePollForm({
           </button>
 
           <p className="text-[11.5px] text-muted">
-            Cambiando settimana le opzioni diventano i suoi giorni (lunedì–sabato), alle {DEFAULT_TIME}.
+            Cambiando settimana le opzioni diventano i suoi giorni (lunedì–sabato), dal primo orario
+            utile.
           </p>
         </div>
 
