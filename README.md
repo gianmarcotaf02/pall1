@@ -20,9 +20,10 @@ Progetto Vercel: `pall1` · repo GitHub: `gianmarcotaf02/pall1`
 - **Sondaggi** (stile WhatsApp): domanda + opzioni, a scelta singola o multipla, con **chi ha
   votato cosa visibile a tutti**; chiudi, riapri o elimina i tuoi. Le opzioni possono portare una
   data e ora, così l'admin crea la partita con un click.
-- **Settimane reali**: un sondaggio può riferirsi a una settimana (lunedì → domenica). Scegliendola,
-  le opzioni diventano i suoi sette giorni con la data vera; i sondaggi aperti si raggruppano per
-  settimana, dalla più vicina a oggi.
+- **Settimane reali**: un sondaggio può riferirsi a una settimana (lunedì → sabato). Scegliendola,
+  le opzioni diventano i suoi giorni con la data vera e **ogni giorno ha il suo sottosondaggio sugli
+  orari** (feriali 18:00–21:00, sabato 15:30–18:30, ogni 30 minuti); i sondaggi aperti si raggruppano
+  per settimana, dalla più vicina a oggi.
 - **Formati e posizioni:** ogni partita è *calcetto (a 5)*, *calciotto (a 8)* o *calcio a 11*.
   Nel profilo si scelgono le **posizioni preferite per ogni formato toccandole su un campo 2D**
   (uno o più ruoli per formato); l'admin le vede mentre forma le squadre.
@@ -173,6 +174,7 @@ remoto (`supabase migration list` → local = remote).
 | `…_polls` | `polls`, `poll_options`, `poll_votes` + trigger + RLS |
 | `…_poll_options_sort_order` | rinomina `position` → `sort_order` (parola riservata SQL + attrito PostgREST) |
 | `…_poll_week` | `polls.week_start` (lunedì, opzionale) + vincolo e indice |
+| `…_poll_subpolls` | `polls.parent_option_id`: un giorno può avere il suo sottosondaggio orari |
 | `…_formats_and_positions` | `match_format`, catalogo `positions` (25 posizioni su 3 formati + coordinate), `profile_positions`, `matches.format`; elimina i vecchi `roles`/`preferred_role` |
 
 ```bash
@@ -195,6 +197,8 @@ npm run gen:types         # rigenera i tipi TypeScript
 - **Sondaggi:** chiunque può crearne uno; ognuno vota solo per sé e solo su sondaggi aperti;
   tutti vedono chi ha votato cosa; domanda e tipo di voto non si modificano dopo la creazione
   (invaliderebbero i voti); l'autore o un admin chiude e cancella.
+- I sondaggi-settimana includono lunedì–sabato (niente domenica); ogni giorno genera un sottosondaggio
+  orari con gli orari proposti per quel giorno, votabile in linea come un sondaggio normale.
 - Un sondaggio a scelta singola sostituisce automaticamente il voto precedente (trigger).
 - **Posizioni:** il catalogo `positions` è di sola lettura dall'app; ognuno scrive solo le proprie
   `profile_positions`, tutti le vedono.
