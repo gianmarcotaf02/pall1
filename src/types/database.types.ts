@@ -483,6 +483,87 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_link_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          profile_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          profile_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_link_codes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_link_codes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "standings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_subscribers: {
+        Row: {
+          chat_id: number
+          created_at: string
+          first_name: string | null
+          notifications_enabled: boolean
+          profile_id: string
+          telegram_username: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          first_name?: string | null
+          notifications_enabled?: boolean
+          profile_id: string
+          telegram_username?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          first_name?: string | null
+          notifications_enabled?: boolean
+          profile_id?: string
+          telegram_username?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_subscribers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_subscribers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "standings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       player_stats: {
