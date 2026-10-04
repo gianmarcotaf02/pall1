@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  IconChat,
   IconHome,
   IconPitch,
-  IconPodium,
   IconPoll,
   IconShield,
   IconUser,
@@ -15,7 +15,7 @@ import {
 const ITEMS = [
   { href: "/", label: "Home", Icon: IconHome, exact: true, also: [] },
   { href: "/matches", label: "Partite", Icon: IconPitch, exact: false, also: ["/polls"] },
-  { href: "/standings", label: "Classifica", Icon: IconPodium, exact: false, also: [] },
+  { href: "/chat", label: "Chat", Icon: IconChat, exact: false, also: [] },
   { href: "/players", label: "Giocatori", Icon: IconUsers, exact: false, also: [] },
   { href: "/profile", label: "Profilo", Icon: IconUser, exact: false, also: [] },
 ] as const;
