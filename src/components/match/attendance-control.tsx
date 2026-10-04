@@ -18,6 +18,11 @@ const OPTIONS: Array<{ value: Attendance; label: string; icon: typeof IconCheck 
   { value: "absent", label: "Foldo, sono un infame", icon: IconX },
 ];
 
+/** "Forse" (dati vecchi) conta come iscritto: può ritirare. */
+function isRegistered(value: Attendance | null) {
+  return value === "present" || value === "maybe";
+}
+
 const SELECTED: Record<string, string> = {
   present: "border-accent-solid bg-accent-solid text-accent-on",
   absent: "border-loss bg-loss/12 text-loss",
@@ -25,16 +30,21 @@ const SELECTED: Record<string, string> = {
 
 function Options({ value }: { value: Attendance | null }) {
   const { pending } = useFormStatus();
+  const registered = isRegistered(value);
+
+  // Chi non è iscritto non può "foldare": non c'è nessuna posizione da liberare.
+  // Vede solo la conferma; il forfait compare dopo che si è iscritto.
+  const options = registered ? OPTIONS : OPTIONS.filter((option) => option.value === "present");
 
   return (
     <fieldset
       disabled={pending}
       aria-busy={pending}
-      className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+      className={`grid w-full grid-cols-1 gap-2 ${registered ? "sm:grid-cols-2" : ""}`}
     >
       <legend className="sr-only">La tua presenza a questa partita</legend>
 
-      {OPTIONS.map((option) => {
+      {options.map((option) => {
         const selected = value === option.value;
         const Icon = option.icon;
         return (
