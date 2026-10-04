@@ -162,6 +162,8 @@ export async function createPollAction(_prev: FormState, formData: FormData): Pr
     question: parsed.data.question,
     details: parsed.data.details?.trim() ? parsed.data.details.trim() : null,
     creator: profile.nickname,
+    // Oltre la chiusura l'avviso non ha più senso: non si recupera.
+    closesAt,
   }).catch(() => {});
 
   revalidatePolls(poll.id);

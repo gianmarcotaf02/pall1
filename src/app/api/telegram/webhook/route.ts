@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { appBaseUrl, escapeTelegramHtml, sendTelegramMessage } from "@/lib/telegram";
+import {
+  appBaseUrl,
+  escapeTelegramHtml,
+  sendMissedNotifications,
+  sendTelegramMessage,
+} from "@/lib/telegram";
 
 /**
  * Webhook del bot Telegram.
@@ -133,6 +138,10 @@ async function handleStart(
       `✅ <b>Collegato!</b>\nCiao ${name}, da ora ricevi qui gli avvisi di Pall1: nuove partite e nuovi sondaggi.\n\nScrivi /stop se vuoi metterli in pausa.`,
       { button: { label: "Apri Pall1", url: appBaseUrl() } },
     );
+
+    // Chi collega il bot dopo la creazione di un sondaggio (o di una partita)
+    // riceve gli avvisi ancora attuali che non ha mai visto.
+    await sendMissedNotifications(chatId, code.profile_id);
     return;
   }
 
@@ -152,6 +161,9 @@ async function handleStart(
       chatId,
       "🔔 Notifiche <b>riattivate</b>. Sei già collegato al tuo profilo Pall1.",
     );
+
+    // Anche chi riattiva dopo una pausa recupera quello che si è perso.
+    await sendMissedNotifications(chatId, existing.profile_id);
     return;
   }
 
