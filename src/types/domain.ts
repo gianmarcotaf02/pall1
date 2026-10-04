@@ -53,6 +53,18 @@ export type MatchDetail = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Notifiche Telegram                                                 */
+/* ------------------------------------------------------------------ */
+
+/** Iscrizione Telegram del profilo corrente. */
+export type TelegramSubscription = {
+  chatId: number;
+  username: string | null;
+  firstName: string | null;
+  enabled: boolean;
+};
+
+/* ------------------------------------------------------------------ */
 /* Sondaggi                                                            */
 /* ------------------------------------------------------------------ */
 

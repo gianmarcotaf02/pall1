@@ -14,6 +14,7 @@ import type {
   RosterEntry,
   StandingRow,
   TeamSide,
+  TelegramSubscription,
 } from "@/types/domain";
 
 type AttendanceRow = { match_id: string; attendance: Attendance };
@@ -227,6 +228,28 @@ export async function listPlayerStats(): Promise<PlayerStatsRow[]> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.from("player_stats").select("*");
   return data ?? [];
+}
+
+/* ------------------------------------------------------------------ */
+/* Notifiche Telegram                                                 */
+/* ------------------------------------------------------------------ */
+
+export async function getMyTelegramSubscription(): Promise<TelegramSubscription | null> {
+  const supabase = await createSupabaseServerClient();
+  // La RLS limita alla riga del profilo corrente.
+  const { data } = await supabase
+    .from("telegram_subscribers")
+    .select("chat_id, telegram_username, first_name, notifications_enabled")
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    chatId: data.chat_id,
+    username: data.telegram_username,
+    firstName: data.first_name,
+    enabled: data.notifications_enabled,
+  };
 }
 
 /* ------------------------------------------------------------------ */
