@@ -24,7 +24,7 @@ function getServerSnapshot() {
   return false;
 }
 
-export function ThemeToggle({ className }: { className?: string } = {}) {
+export function ThemeToggle({ className = "size-10 rounded-control" }: { className?: string } = {}) {
   const isDark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggle() {
@@ -45,7 +45,10 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
       aria-label={isDark ? "Passa al tema chiaro" : "Passa al tema scuro"}
       aria-pressed={isDark}
       className={[
-        "inline-flex size-10 items-center justify-center rounded-control text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink",
+        // Niente `size`/`rounded` di base: li decide il chiamante, così non si
+        // scontrano due utility Tailwind (es. `size-10` contro `size-11`) con
+        // esito deciso dall'ordine nel foglio, non dall'ordine della classe.
+        "inline-flex items-center justify-center text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink",
         className,
       ]
         .filter(Boolean)

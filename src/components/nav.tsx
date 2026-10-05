@@ -114,9 +114,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigazione principale"
-      className="glass-strong fixed inset-x-0 bottom-0 z-40 border-t border-rule pb-[max(env(safe-area-inset-bottom),0.25rem)] md:hidden"
+      className="glass-strong glass-pop fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-full border border-rule p-1.5 md:hidden"
     >
-      <ul className="flex items-stretch">
+      <ul className="flex items-stretch gap-0.5">
         {ITEMS.map(({ href, label, Icon, exact, also }) => {
           const active = isActive(pathname, href, exact, also);
           return (
@@ -125,11 +125,13 @@ export function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "flex h-16 flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition-colors duration-150",
-                  active ? "text-accent-text" : "text-muted",
+                  "flex h-[52px] flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-medium transition-colors duration-150",
+                  active
+                    ? "bg-accent/12 text-accent-text dark:bg-accent/22"
+                    : "text-muted hover:text-ink",
                 ].join(" ")}
               >
-                <Icon className="size-[22px]" />
+                <Icon className="size-[21px]" />
                 {label}
               </Link>
             </li>
