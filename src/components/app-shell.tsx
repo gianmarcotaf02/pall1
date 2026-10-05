@@ -67,39 +67,52 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        {/* Barra mobile */}
-        <header className="glass sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule px-4 md:hidden">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="Pall1 — home">
-            <LogoMark className="size-8 text-accent" title="" />
+        {/*
+         * Barra mobile flottante: non una fascia piena ma pezzi staccati che
+         * galleggiano sopra il contenuto (marchio a sinistra, azioni a destra).
+         * Il contenitore è trasparente e `pointer-events-none`: i click passano
+         * negli spazi vuoti, li intercettano solo i pezzi (che li riattivano).
+         */}
+        <header className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-center gap-2 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] md:hidden">
+          <Link
+            href="/"
+            aria-label="Pall1 — home"
+            className="glass pointer-events-auto flex h-11 items-center gap-2.5 rounded-full border border-rule px-3.5"
+          >
+            <LogoMark className="size-7 text-accent" title="" />
             <Wordmark />
           </Link>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="pointer-events-auto ml-auto flex items-center gap-2">
             {profile.is_admin ? (
               <Link
                 href="/admin"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rule px-3 text-[12px] font-medium text-muted transition-colors duration-150 hover:text-ink"
+                className="glass inline-flex h-11 items-center gap-1.5 rounded-full border border-rule px-3.5 text-[12px] font-medium text-muted transition-colors duration-150 hover:text-ink"
               >
                 <IconShield className="size-4 text-accent-text" />
-                Gestione
+                <span className="hidden min-[380px]:inline">Gestione</span>
               </Link>
             ) : profile.is_organizer ? (
               <Link
                 href="/matches/new"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rule px-3 text-[12px] font-medium text-muted transition-colors duration-150 hover:text-ink"
+                className="glass inline-flex h-11 items-center gap-1.5 rounded-full border border-rule px-3.5 text-[12px] font-medium text-muted transition-colors duration-150 hover:text-ink"
               >
                 <IconPitch className="size-4 text-accent-text" />
-                Organizza
+                <span className="hidden min-[380px]:inline">Organizza</span>
               </Link>
             ) : null}
-            <ThemeToggle />
-            <Link href="/profile" aria-label="Il tuo profilo">
+            <ThemeToggle className="glass size-11 rounded-full border border-rule" />
+            <Link
+              href="/profile"
+              aria-label="Il tuo profilo"
+              className="glass flex size-11 items-center justify-center rounded-full border border-rule"
+            >
               <Avatar name={profile.nickname} src={profile.avatar_url} size="sm" />
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1040px] flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
+        <main className="mx-auto w-full max-w-[1040px] flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-[calc(env(safe-area-inset-top)+4.5rem)] md:px-8 md:pb-12 md:pt-8">
           {children}
         </main>
       </div>

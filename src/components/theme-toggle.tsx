@@ -24,7 +24,7 @@ function getServerSnapshot() {
   return false;
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string } = {}) {
   const isDark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggle() {
@@ -44,7 +44,12 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={isDark ? "Passa al tema chiaro" : "Passa al tema scuro"}
       aria-pressed={isDark}
-      className="inline-flex size-10 items-center justify-center rounded-control text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
+      className={[
+        "inline-flex size-10 items-center justify-center rounded-control text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {isDark ? <IconSun className="size-[18px]" /> : <IconMoon className="size-[18px]" />}
     </button>
