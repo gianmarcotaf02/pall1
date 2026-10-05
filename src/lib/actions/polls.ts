@@ -247,6 +247,43 @@ async function checkDayTimeChoice(
 }
 
 /**
+ * Scegliendo un orario il giorno padre si spunta da solo. Restituisce il voto
+ * sul giorno da aggiungere insieme all'orario, oppure null se non serve (non è
+ * un orario, oppure il giorno è già votato).
+ */
+async function autoDayVote(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  args: { pollId: string; profileId: string },
+): Promise<{ pollId: string; optionId: string } | null> {
+  const { pollId, profileId } = args;
+
+  const { data: poll } = await supabase
+    .from("polls")
+    .select("id, parent_option_id")
+    .eq("id", pollId)
+    .maybeSingle();
+  if (!poll?.parent_option_id) return null;
+
+  const { data: parentOption } = await supabase
+    .from("poll_options")
+    .select("poll_id")
+    .eq("id", poll.parent_option_id)
+    .maybeSingle();
+  if (!parentOption) return null;
+
+  const { data: dayVote } = await supabase
+    .from("poll_votes")
+    .select("option_id")
+    .eq("poll_id", parentOption.poll_id)
+    .eq("option_id", poll.parent_option_id)
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (dayVote) return null;
+
+  return { pollId: parentOption.poll_id, optionId: poll.parent_option_id };
+}
+
+/**
  * Salva il voto dell'utente su un'opzione. L'input è un'intenzione esplicita
  * (`voted`), non un toggle: ripetere la stessa chiamata è innocuo, quindi un
  * doppio tap o un retry non invertono il voto.
@@ -282,6 +319,19 @@ export async function setVoteAction(input: {
         { onConflict: "option_id,profile_id", ignoreDuplicates: true },
       );
     if (error) return { error: errorMessage(error) };
+
+    // Il giorno del sottosondaggio orari si spunta da solo. Insert semplice:
+    // sul sondaggio a scelta singola è il trigger a sostituire il giorno
+    // precedente, esattamente come fa il client.
+    const autoDay = await autoDayVote(supabase, { pollId: poll_id, profileId: profile.id });
+    if (autoDay) {
+      const { error: dayError } = await supabase.from("poll_votes").insert({
+        poll_id: autoDay.pollId,
+        option_id: autoDay.optionId,
+        profile_id: profile.id,
+      });
+      if (dayError) return { error: errorMessage(dayError) };
+    }
   } else {
     const { error } = await supabase
       .from("poll_votes")

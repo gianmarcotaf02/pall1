@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayTimeBlocker, dayTimeMaps } from "@/lib/poll-day-time";
+import { autoCheckedDayId, dayTimeBlocker, dayTimeMaps } from "@/lib/poll-day-time";
 import type { PollOptionResult, PollSubPoll } from "@/types/domain";
 
 function subPoll(id: string): PollSubPoll {
@@ -91,5 +91,31 @@ describe("dayTimeBlocker", () => {
     const { dayToSub, subToDay } = dayTimeMaps(poll);
     expect(dayToSub.d1).toEqual({ subPollId: "s1", label: "Lunedì" });
     expect(subToDay.s1).toEqual({ dayOptionId: "d1", dayLabel: "Lunedì" });
+  });
+});
+
+describe("autoCheckedDayId", () => {
+  it("spunta il giorno quando si vota un orario, se non era già spuntato", () => {
+    expect(
+      autoCheckedDayId({ poll, myVotes: {}, targetPollId: "s1", add: true }),
+    ).toBe("d1");
+  });
+
+  it("non spunta nulla se il giorno è già votato", () => {
+    expect(
+      autoCheckedDayId({ poll, myVotes: { p1: ["d1"] }, targetPollId: "s1", add: true }),
+    ).toBeNull();
+  });
+
+  it("non spunta nulla quando si toglie un orario", () => {
+    expect(autoCheckedDayId({ poll, myVotes: {}, targetPollId: "s1", add: false })).toBeNull();
+  });
+
+  it("non spunta nulla votando il giorno stesso", () => {
+    expect(autoCheckedDayId({ poll, myVotes: {}, targetPollId: "p1", add: true })).toBeNull();
+  });
+
+  it("non spunta nulla per un sondaggio senza giorno padre", () => {
+    expect(autoCheckedDayId({ poll, myVotes: {}, targetPollId: "p9", add: true })).toBeNull();
   });
 });
