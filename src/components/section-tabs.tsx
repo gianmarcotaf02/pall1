@@ -11,7 +11,7 @@ export function SectionTabs({ active }: { active: "matches" | "polls" }) {
   ];
 
   return (
-    <div className="mb-5 inline-flex rounded-control bg-surface-2 p-1" role="tablist">
+    <div className="glass mb-5 inline-flex rounded-control p-1" role="tablist">
       {items.map((item) => {
         const selected = item.key === active;
         return (

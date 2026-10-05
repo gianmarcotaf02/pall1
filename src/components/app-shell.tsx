@@ -25,7 +25,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[232px_1fr]">
       {/* Rail desktop */}
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-rule px-3 py-5 md:flex">
+      <aside className="glass sticky top-0 hidden h-dvh flex-col border-r border-rule px-3 py-5 md:flex">
         <div className="flex items-center gap-2.5 px-3 pb-6">
           <LogoMark className="size-8 text-accent" title="" />
           <Wordmark />
@@ -68,7 +68,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-col">
         {/* Barra mobile */}
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule bg-paper px-4 md:hidden">
+        <header className="glass sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-rule px-4 md:hidden">
           <Link href="/" className="flex items-center gap-2.5" aria-label="Pall1 — home">
             <LogoMark className="size-8 text-accent" title="" />
             <Wordmark />

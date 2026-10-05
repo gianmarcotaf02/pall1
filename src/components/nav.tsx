@@ -114,7 +114,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigazione principale"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface pb-[max(env(safe-area-inset-bottom),0.25rem)] md:hidden"
+      className="glass-strong fixed inset-x-0 bottom-0 z-40 border-t border-rule pb-[max(env(safe-area-inset-bottom),0.25rem)] md:hidden"
     >
       <ul className="flex items-stretch">
         {ITEMS.map(({ href, label, Icon, exact, also }) => {

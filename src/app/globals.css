@@ -32,6 +32,23 @@
 
   --focus: oklch(46% 0.134 147);
 
+  /* Vetro: superfici che galleggiano sopra lo sfondo ambientale. */
+  --glass: oklch(99% 0.006 148 / 0.66);
+  --glass-strong: oklch(99.2% 0.005 148 / 0.85);
+  --glass-border: oklch(86% 0.02 148 / 0.8);
+  --glass-highlight: oklch(100% 0 0 / 0.72);
+  --glass-blur: 20px;
+
+  /*
+   * Sfondo ambientale: senza qualcosa da sfocare il vetro è solo grigio più
+   * chiaro. Sono aloni fissi dietro tutto (`body::before`), non decorazione a
+   * caso: più saturi nel tema scuro, dove il vetro si vede davvero.
+   */
+  --ambient-1: oklch(72% 0.15 150 / 0.3);
+  --ambient-2: oklch(74% 0.11 210 / 0.22);
+  --ambient-3: oklch(88% 0.1 105 / 0.2);
+  --ambient-lines: oklch(60% 0.06 148 / 0.05);
+
   --shadow-card: 0 1px 1px oklch(22% 0.03 150 / 0.06), 0 10px 30px -20px oklch(22% 0.03 150 / 0.3);
   --shadow-pop: 0 1px 1px oklch(22% 0.03 150 / 0.07), 0 18px 44px -22px oklch(22% 0.03 150 / 0.42);
 }
@@ -59,6 +76,17 @@
   --draw: oklch(78% 0.09 80);
 
   --focus: oklch(72% 0.2 148);
+
+  --glass: oklch(24% 0.02 150 / 0.6);
+  --glass-strong: oklch(25% 0.022 150 / 0.82);
+  --glass-border: oklch(42% 0.024 150 / 0.75);
+  --glass-highlight: oklch(100% 0 0 / 0.1);
+  --glass-blur: 22px;
+
+  --ambient-1: oklch(56% 0.17 150 / 0.42);
+  --ambient-2: oklch(52% 0.13 212 / 0.34);
+  --ambient-3: oklch(46% 0.1 105 / 0.24);
+  --ambient-lines: oklch(70% 0.06 148 / 0.045);
 
   --shadow-card: 0 1px 1px oklch(6% 0.02 150 / 0.5), 0 10px 30px -20px oklch(6% 0.02 150 / 0.75);
   --shadow-pop: 0 1px 1px oklch(6% 0.02 150 / 0.55), 0 18px 44px -22px oklch(6% 0.02 150 / 0.85);
@@ -120,6 +148,28 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /*
+   * Sfondo ambientale dietro il contenuto: aloni fissi + trama di campo molto
+   * tenue. `z-index: -1` lo tiene sotto ogni pannello ma sopra il colore del
+   * body, e `pointer-events: none` garantisce che non rubi un click.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(
+        115deg,
+        var(--ambient-lines) 0 1px,
+        transparent 1px 88px
+      ),
+      radial-gradient(58% 44% at 12% -6%, var(--ambient-1), transparent 70%),
+      radial-gradient(50% 40% at 92% 8%, var(--ambient-3), transparent 72%),
+      radial-gradient(64% 52% at 78% 104%, var(--ambient-2), transparent 74%);
+  }
+
   h1,
   h2,
   h3 {
@@ -153,6 +203,52 @@
   textarea,
   button {
     font: inherit;
+  }
+}
+
+/*
+ * Vetro. Solo `background-color` + sfocatura + riga di luce in alto: il bordo
+ * resta ai componenti (`border-rule`), così ognuno tiene il proprio contorno.
+ * Da usare dove qualcosa *galleggia* — barre, overlay, ricerca — non su ogni
+ * card: sono layer di blur, e su Android basso si pagano.
+ */
+@layer components {
+  .glass,
+  .glass-strong {
+    background-color: var(--glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-highlight);
+  }
+
+  .glass-strong {
+    background-color: var(--glass-strong);
+  }
+
+  /* Vetro davvero sollevato (modali, pillole): riga di luce + ombra esterna. */
+  .glass-pop {
+    box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-pop);
+  }
+
+  /*
+   * Ripieghi: niente blur (browser vecchi) o trasparenza ridotta a livello di
+   * sistema (iOS «Riduci trasparenza», `prefers-contrast`). La superficie torna
+   * piena: si perde l'effetto, non la leggibilità.
+   */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass,
+    .glass-strong {
+      background-color: var(--surface);
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .glass,
+    .glass-strong {
+      background-color: var(--surface);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 }
 
