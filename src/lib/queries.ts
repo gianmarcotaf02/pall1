@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   Attendance,
@@ -169,7 +170,11 @@ export async function getRoster(matchId: string): Promise<RosterEntry[]> {
   }));
 }
 
-export async function getMatchDetail(id: string): Promise<MatchDetail | null> {
+/**
+ * `cache()` evita la query doppia: la pagina di dettaglio chiama questa stessa
+ * funzione sia in `generateMetadata` sia nel componente.
+ */
+export const getMatchDetail = cache(async (id: string): Promise<MatchDetail | null> => {
   const supabase = await createSupabaseServerClient();
 
   const [match, roster, result] = await Promise.all([
@@ -181,7 +186,7 @@ export async function getMatchDetail(id: string): Promise<MatchDetail | null> {
   if (!match) return null;
 
   return { match, roster, result: result.data ?? null };
-}
+});
 
 export async function getMyAttendance(
   matchId: string,
@@ -225,11 +230,12 @@ export async function listChatMessages(limit = 200): Promise<ChatMessage[]> {
     .reverse();
 }
 
-export async function getProfileById(id: string): Promise<Profile | null> {
+/** Stessa deduplica di `getMatchDetail`: metadata + pagina, una sola query. */
+export const getProfileById = cache(async (id: string): Promise<Profile | null> => {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
   return data ?? null;
-}
+});
 
 export async function listStandings(): Promise<StandingRow[]> {
   const supabase = await createSupabaseServerClient();
@@ -416,16 +422,16 @@ function toSubPoll(
   };
 }
 
-export async function getPollDetail(
-  id: string,
-  myProfileId: string,
-): Promise<PollDetail | null> {
-  const data = await loadPollData();
-  const poll = data.polls.find((item) => item.id === id);
-  if (!poll) return null;
+/** Metadata e pagina chiedono lo stesso sondaggio: una sola query per render. */
+export const getPollDetail = cache(
+  async (id: string, myProfileId: string): Promise<PollDetail | null> => {
+    const data = await loadPollData();
+    const poll = data.polls.find((item) => item.id === id);
+    if (!poll) return null;
 
-  return {
-    ...toPollSummary(poll, data, myProfileId),
-    options: toOptionResults(poll.id, data, myProfileId, true),
-  };
-}
+    return {
+      ...toPollSummary(poll, data, myProfileId),
+      options: toOptionResults(poll.id, data, myProfileId, true),
+    };
+  },
+);
