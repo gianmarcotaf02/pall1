@@ -50,20 +50,25 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  /*
+   * `getClaims()` verifica il JWT in locale (chiavi JWKS tenute in cache):
+   * niente round-trip verso Supabase Auth a ogni navigazione. Con le chiavi
+   * simmetriche legacy ricade da sé su `getUser()`, quindi è sicuro in
+   * entrambi i casi.
+   */
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub ?? null;
 
   const { pathname, search } = request.nextUrl;
 
-  if (!user && !isPublic(pathname)) {
+  if (!userId && !isPublic(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname === "/login" || pathname === "/register")) {
+  if (userId && (pathname === "/login" || pathname === "/register")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";

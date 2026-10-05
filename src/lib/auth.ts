@@ -13,12 +13,17 @@ export const getCurrentUser = cache(async () => {
 
 export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  /*
+   * Verifica locale del JWT: `requireProfile()` gira su ogni pagina, quindi
+   * qui un `getUser()` costerebbe un round-trip verso Supabase a ogni
+   * navigazione. `getClaims()` ricade su `getUser()` solo con chiavi
+   * simmetriche legacy.
+   */
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (!userId) return null;
 
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
   return data ?? null;
 });
 
