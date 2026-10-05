@@ -70,7 +70,7 @@ export default async function PlayersPage() {
                   <span className="num font-semibold text-ink">{stats?.wins ?? 0}</span> vittorie
                 </p>
               </div>
-            </a>
+            </Link>
           );
         })}
       </div>

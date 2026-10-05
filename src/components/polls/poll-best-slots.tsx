@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -29,6 +29,7 @@ export function PollBestSlots({
   const slots = bestPollSlots(poll);
   const isPreview = !poll.closed;
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const closeDialog = useCallback(() => setOpenKey(null), []);
 
   if (slots.length === 0) {
     return (
@@ -85,13 +86,19 @@ export function PollBestSlots({
                 className="group block w-full rounded-control text-left"
               >
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-[13px] font-medium text-ink">
-                    {slot.primary}
-                    <span className="text-muted">
-                      {slot.time ? <> · <span className="num text-ink">{slot.time}</span></> : " · tutto il giorno"}
+                  {/*
+                   * L'etichetta si tronca da sola: il badge «migliore» resta
+                   * intero anche quando lo spazio è poco (schermi da 320px).
+                   */}
+                  <span className="flex min-w-0 items-baseline gap-2">
+                    <span className="min-w-0 truncate text-[13px] font-medium text-ink">
+                      {slot.primary}
+                      <span className="text-muted">
+                        {slot.time ? <> · <span className="num text-ink">{slot.time}</span></> : " · tutto il giorno"}
+                      </span>
                     </span>
                     {isBest ? (
-                      <span className="ml-2 rounded-full bg-accent-solid px-1.5 py-0.5 align-middle text-[10px] font-semibold text-accent-on">
+                      <span className="shrink-0 rounded-full bg-accent-solid px-1.5 py-0.5 text-[10px] font-semibold text-accent-on">
                         migliore
                       </span>
                     ) : null}
@@ -128,7 +135,7 @@ export function PollBestSlots({
           slot={openSlot}
           isPreview={isPreview}
           matchCreatePath={matchCreatePath}
-          onClose={() => setOpenKey(null)}
+          onClose={closeDialog}
         />
       ) : null}
     </section>
@@ -147,16 +154,24 @@ function VotersDialog({
   matchCreatePath: string | null;
   onClose: () => void;
 }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
+    // Al ripristino (chiusura) il focus torna dov'era prima di aprire.
+    const opener = document.activeElement as HTMLElement | null;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previous;
+      opener?.focus?.();
     };
   }, [onClose]);
 
@@ -171,7 +186,7 @@ function VotersDialog({
         aria-modal="true"
         aria-label={`Votanti di ${slot.primary}`}
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card border border-rule bg-surface shadow-xl sm:rounded-card"
+        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card border border-rule bg-surface pb-[env(safe-area-inset-bottom)] shadow-xl sm:rounded-card sm:pb-0"
       >
         <header className="flex items-start justify-between gap-4 border-b border-rule px-4 py-3">
           <div className="min-w-0">
@@ -186,6 +201,7 @@ function VotersDialog({
             </p>
           </div>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Chiudi"
