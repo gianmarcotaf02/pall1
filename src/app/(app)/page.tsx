@@ -51,6 +51,25 @@ export default async function DashboardPage() {
 
   const openPolls = polls.filter((poll) => !poll.closed);
 
+  const quickActions = [
+    profile.is_admin || profile.is_organizer ? (
+      <QuickAction
+        key="match"
+        href={profile.is_admin ? "/admin/matches" : "/matches/new"}
+        icon={<IconPitch className="size-7" />}
+        title="Nuova partita"
+        hint="Data, campo, posti"
+      />
+    ) : null,
+    <QuickAction
+      key="poll"
+      href="/polls/new"
+      icon={<IconCalendar className="size-7" />}
+      title="Nuovo sondaggio"
+      hint="Giorno e orario"
+    />,
+  ].filter(Boolean);
+
   const nicknameById = new Map(players.map((p) => [p.id, p.nickname]));
   const scorers = stats
     .filter((row) => (row.goals ?? 0) > 0)
@@ -71,23 +90,13 @@ export default async function DashboardPage() {
 
       {showTelegramBanner ? <TelegramBanner /> : null}
 
-      {/* Scelta rapida: partita o sondaggio, sempre sulla stessa riga */}
-      <section className="mb-6 grid grid-cols-2 gap-3">
-        {profile.is_admin || profile.is_organizer ? (
-          <QuickAction
-            href={profile.is_admin ? "/admin/matches" : "/matches/new"}
-            icon={<IconPitch className="size-7" />}
-            title="Nuova partita"
-            hint="Data, campo, posti"
-          />
-        ) : null}
-
-        <QuickAction
-          href="/polls/new"
-          icon={<IconCalendar className="size-7" />}
-          title="Nuovo sondaggio"
-          hint="Giorno e orario"
-        />
+      {/*
+       * Scelta rapida: partita e sondaggio sulla stessa riga. Chi non organizza
+       * vede solo il sondaggio, che da solo prende tutta la larghezza invece di
+       * lasciare mezza riga vuota.
+       */}
+      <section className={quickActions.length > 1 ? "mb-6 grid grid-cols-2 gap-3" : "mb-6"}>
+        {quickActions}
       </section>
 
       {next ? (

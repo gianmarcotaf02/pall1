@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Avatar } from "@/components/ui/avatar";
 import { JerseyNumber } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ export default async function PlayersPage() {
           const positions = positionsByProfile.get(player.id) ?? [];
 
           return (
-            <a
+            <Link
               key={player.id}
               href={`/players/${player.id}`}
               className="flex items-start gap-4 rounded-card border border-rule bg-surface p-4 transition-colors duration-150 hover:bg-surface-2"
@@ -87,13 +88,13 @@ export default async function PlayersPage() {
           <ul className="flex flex-wrap gap-2">
             {inactive.map((player) => (
               <li key={player.id}>
-                <a
+                <Link
                   href={`/players/${player.id}`}
                   className="inline-flex items-center gap-2 rounded-full border border-rule px-3 py-1.5 text-[13px] text-muted hover:text-ink"
                 >
                   <Avatar name={player.nickname} src={player.avatar_url} size="sm" className="size-6" />
                   {player.nickname}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
