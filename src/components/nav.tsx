@@ -43,7 +43,6 @@ export function RailNav({
           <Link
             key={href}
             href={href}
-            prefetch
             aria-current={active ? "page" : undefined}
             className={[
               "group flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
@@ -60,7 +59,6 @@ export function RailNav({
       {isAdmin ? (
         <Link
           href="/admin"
-          prefetch
           aria-current={pathname.startsWith("/admin") ? "page" : undefined}
           className={[
             "mt-2 flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
@@ -80,7 +78,6 @@ export function RailNav({
       {!isAdmin && isOrganizer ? (
         <Link
           href="/matches/new"
-          prefetch
           aria-current={pathname.startsWith("/matches/new") ? "page" : undefined}
           className={[
             "mt-2 flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
@@ -96,7 +93,6 @@ export function RailNav({
 
       <Link
         href="/polls"
-        prefetch
         aria-current={pathname.startsWith("/polls") ? "page" : undefined}
         className={[
           "flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
@@ -127,7 +123,6 @@ export function BottomNav() {
             <li key={href} className="flex-1">
               <Link
                 href={href}
-                prefetch
                 aria-current={active ? "page" : undefined}
                 className={[
                   "flex h-16 flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition-colors duration-150",
