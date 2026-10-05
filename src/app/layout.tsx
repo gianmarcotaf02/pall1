@@ -1,7 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/archivo";
-import "@fontsource-variable/instrument-sans";
+import localFont from "next/font/local";
 import "./globals.css";
+
+/*
+ * Font self-hosted da `@fontsource-variable` ma caricati con `next/font/local`:
+ * Next li preloada in `<head>` (invece di scoprirli solo dopo il CSS) e genera
+ * un fallback con le stesse metriche, così il testo non balla al cambio font.
+ * Solo il subset latino, asse peso: due file, ~64 kB in tutto.
+ */
+const sansFont = localFont({
+  src: "../../node_modules/@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2",
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+const displayFont = localFont({
+  src: "../../node_modules/@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2",
+  variable: "--font-archivo",
+  display: "swap",
+});
 
 const DESCRIPTION = "Partite, squadre, risultati e statistiche del nostro calcetto.";
 
@@ -21,6 +38,17 @@ function siteUrl(): string {
   const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
   return vercel ? `https://${vercel}` : "http://localhost:3000";
 }
+
+/** Origine di Supabase: avatar (Storage) e chat (Realtime) ci parlano spesso. */
+const supabaseOrigin = (() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+})();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -65,8 +93,14 @@ const themeScript = `(function(){try{var s=localStorage.getItem("pall1-theme");v
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html
+      lang="it"
+      suppressHydrationWarning
+      className={`${sansFont.variable} ${displayFont.variable}`}
+    >
       <head>
+        {/* Avvia prima possibile la connessione a Supabase (avatar, realtime). */}
+        {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" /> : null}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-dvh">{children}</body>

@@ -86,9 +86,11 @@
   --color-focus: var(--focus);
 
   --font-sans:
-    "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    var(--font-instrument, "Instrument Sans Variable"), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
   --font-display:
-    "Archivo Variable", "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    var(--font-archivo, "Archivo Variable"), var(--font-instrument, "Instrument Sans Variable"),
+    ui-sans-serif, system-ui, sans-serif;
 
   --radius-control: 10px;
   --radius-card: 14px;
