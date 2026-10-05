@@ -301,9 +301,6 @@ type PollOptionLite = {
 type PollVoteLite = { poll_id: string; option_id: string; profile_id: string };
 type ProfileLite = { id: string; nickname: string; avatar_url: string | null };
 
-type PollVoteLite = { poll_id: string; option_id: string; profile_id: string };
-type ProfileLite = { id: string; nickname: string; avatar_url: string | null };
-
 type PollData = {
   polls: PollRow[];
   options: PollOptionLite[];
