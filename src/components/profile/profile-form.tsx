@@ -24,7 +24,7 @@ export function ProfileForm({
 }) {
   const [state, action] = useActionState(updateProfileAction, null);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(positions));
-  const [format, setFormat] = useState<MatchFormat>("eight_a_side");
+  const [format, setFormat] = useState<MatchFormat>("five_a_side");
 
   function toggle(code: string) {
     setSelected((previous) => {
