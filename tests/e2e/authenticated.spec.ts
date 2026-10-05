@@ -54,7 +54,7 @@ test.describe("utente autenticato", () => {
   test("la navigazione principale è percorribile", async ({ page, isMobile }) => {
     test.skip(!isMobile, "controllo specifico della bottom nav");
 
-    for (const label of ["Home", "Partite", "Classifica", "Giocatori", "Profilo"]) {
+    for (const label of ["Home", "Partite", "Chat", "Giocatori", "Profilo"]) {
       await page.getByRole("link", { name: label, exact: true }).first().click();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     }

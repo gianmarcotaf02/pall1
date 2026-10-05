@@ -301,19 +301,54 @@ type PollOptionLite = {
 type PollVoteLite = { poll_id: string; option_id: string; profile_id: string };
 type ProfileLite = { id: string; nickname: string; avatar_url: string | null };
 
-async function loadPollData() {
+type PollVoteLite = { poll_id: string; option_id: string; profile_id: string };
+type ProfileLite = { id: string; nickname: string; avatar_url: string | null };
+
+type PollData = {
+  polls: PollRow[];
+  options: PollOptionLite[];
+  votes: PollVoteLite[];
+  profiles: ProfileLite[];
+};
+
+const EMPTY_POLL_DATA: PollData = { polls: [], options: [], votes: [], profiles: [] };
+
+/**
+ * Carica solo le righe che servono davvero: `pollIds` limita sondaggi, opzioni
+ * e voti, i profili sono quelli dei creatori e dei votanti coinvolti. Prima
+ * questa funzione scaricava l'intero archivio dei voti anche per mostrare un
+ * solo sondaggio.
+ */
+async function loadPollData(pollIds: string[]): Promise<PollData> {
+  if (pollIds.length === 0) return EMPTY_POLL_DATA;
+
   const supabase = await createSupabaseServerClient();
-  const [pollsResult, optionsResult, votesResult, profilesResult] = await Promise.all([
-    supabase.from("polls").select("*").order("created_at", { ascending: false }),
-    supabase.from("poll_options").select("id, poll_id, label, starts_at, sort_order").order("sort_order"),
-    supabase.from("poll_votes").select("poll_id, option_id, profile_id"),
-    supabase.from("profiles").select("id, nickname, avatar_url"),
+
+  const [pollsResult, optionsResult, votesResult] = await Promise.all([
+    supabase.from("polls").select("*").in("id", pollIds),
+    supabase
+      .from("poll_options")
+      .select("id, poll_id, label, starts_at, sort_order")
+      .in("poll_id", pollIds)
+      .order("sort_order"),
+    supabase.from("poll_votes").select("poll_id, option_id, profile_id").in("poll_id", pollIds),
   ]);
 
+  const polls = (pollsResult.data ?? []) as PollRow[];
+  const votes = (votesResult.data ?? []) as PollVoteLite[];
+
+  const profileIds = [
+    ...new Set([...polls.map((poll) => poll.created_by), ...votes.map((vote) => vote.profile_id)]),
+  ];
+  const profilesResult =
+    profileIds.length > 0
+      ? await supabase.from("profiles").select("id, nickname, avatar_url").in("id", profileIds)
+      : { data: [] as ProfileLite[] };
+
   return {
-    polls: pollsResult.data ?? [],
+    polls,
     options: (optionsResult.data ?? []) as PollOptionLite[],
-    votes: (votesResult.data ?? []) as PollVoteLite[],
+    votes,
     profiles: (profilesResult.data ?? []) as ProfileLite[],
   };
 }
@@ -325,7 +360,7 @@ export function isPollClosed(poll: { is_closed: boolean; closes_at: string | nul
 
 function toPollSummary(
   poll: PollRow,
-  data: Awaited<ReturnType<typeof loadPollData>>,
+  data: PollData,
   myProfileId: string,
 ): PollSummary {
   const options = data.options.filter((option) => option.poll_id === poll.id);
@@ -353,18 +388,27 @@ function toPollSummary(
 }
 
 export async function listPolls(myProfileId: string): Promise<PollSummary[]> {
-  const data = await loadPollData();
+  const supabase = await createSupabaseServerClient();
   // I sottosondaggi degli orari non compaiono nell'elenco: vivono dentro il
-  // giorno del sondaggio padre.
-  return data.polls
-    .filter((poll) => poll.parent_option_id === null)
-    .map((poll) => toPollSummary(poll, data, myProfileId));
+  // giorno del sondaggio padre. Il filtro sta in SQL, non in JS.
+  const { data } = await supabase
+    .from("polls")
+    .select("id")
+    .is("parent_option_id", null)
+    .order("created_at", { ascending: false });
+
+  const ids = (data ?? []).map((poll) => poll.id);
+  const pollData = await loadPollData(ids);
+
+  return pollData.polls
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((poll) => toPollSummary(poll, pollData, myProfileId));
 }
 
 /** Opzioni di un sondaggio con votanti e (per i giorni) sottosondaggio orari. */
 function toOptionResults(
   pollId: string,
-  data: Awaited<ReturnType<typeof loadPollData>>,
+  data: PollData,
   myProfileId: string,
   withSubPolls: boolean,
 ): PollOptionResult[] {
@@ -402,7 +446,7 @@ function toOptionResults(
 
 function toSubPoll(
   poll: PollRow | undefined,
-  data: Awaited<ReturnType<typeof loadPollData>>,
+  data: PollData,
   myProfileId: string,
 ): PollSubPoll | null {
   if (!poll) return null;
@@ -425,9 +469,25 @@ function toSubPoll(
 /** Metadata e pagina chiedono lo stesso sondaggio: una sola query per render. */
 export const getPollDetail = cache(
   async (id: string, myProfileId: string): Promise<PollDetail | null> => {
-    const data = await loadPollData();
-    const poll = data.polls.find((item) => item.id === id);
+    const supabase = await createSupabaseServerClient();
+
+    const { data: poll } = await supabase.from("polls").select("*").eq("id", id).maybeSingle();
     if (!poll) return null;
+
+    // Gli orari stanno in un sottosondaggio per ogni opzione-giorno.
+    const { data: options } = await supabase.from("poll_options").select("id").eq("poll_id", id);
+    const optionIds = (options ?? []).map((option) => option.id);
+
+    let childIds: string[] = [];
+    if (optionIds.length > 0) {
+      const { data: children } = await supabase
+        .from("polls")
+        .select("id")
+        .in("parent_option_id", optionIds);
+      childIds = (children ?? []).map((child) => child.id);
+    }
+
+    const data = await loadPollData([id, ...childIds]);
 
     return {
       ...toPollSummary(poll, data, myProfileId),
