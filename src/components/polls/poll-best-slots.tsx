@@ -186,7 +186,7 @@ function VotersDialog({
         aria-modal="true"
         aria-label={`Votanti di ${slot.primary}`}
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card border border-rule bg-surface pb-[env(safe-area-inset-bottom)] shadow-xl sm:rounded-card sm:pb-0"
+        className="glass-strong glass-pop flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card border border-rule pb-[env(safe-area-inset-bottom)] sm:rounded-card sm:pb-0"
       >
         <header className="flex items-start justify-between gap-4 border-b border-rule px-4 py-3">
           <div className="min-w-0">

@@ -5,6 +5,11 @@
  * I token sono la fonte di verità: lo script legge :root (tema chiaro) e .dark
  * (tema scuro), converte OKLCH → sRGB e calcola il rapporto di contrasto.
  *
+ * Dal redesign in vetro non basta confrontare due token puri: una superficie
+ * semitrasparente mostra il colore *composto* (vetro sopra aloni sopra pagina).
+ * Lo script riproduce quel compositing in sRGB — come fa il browser — e misura
+ * il contrasto reale del testo su vetro.
+ *
  * Uso: npm run check:contrast
  */
 
@@ -34,6 +39,8 @@ function parseTokens(source) {
 
 /* ---------- OKLCH → sRGB ---------- */
 
+const clamp01 = (value) => Math.min(1, Math.max(0, value));
+
 function oklchToLinearRgb(l, c, hDeg) {
   const h = (hDeg * Math.PI) / 180;
   const a = c * Math.cos(h);
@@ -54,49 +61,54 @@ function oklchToLinearRgb(l, c, hDeg) {
   ];
 }
 
+/** Lineare → sRGB (gamma encoding). */
+function srgbFromLinear(channel) {
+  const c = clamp01(channel);
+  return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+}
+
+/** sRGB → lineare. */
+function linearFromSrgb(channel) {
+  const s = clamp01(channel);
+  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
 function relativeLuminance(linearRgb) {
-  const [r, g, b] = linearRgb.map((value) => Math.min(1, Math.max(0, value)));
+  const [r, g, b] = linearRgb;
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+/** Colore → sRGB gamma-encoded (0..1) + alpha. */
 function parseColor(value) {
   const oklch = value.match(
-    /^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+)?\s*\)$/,
+    /^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/,
   );
   if (oklch) {
+    const linear = oklchToLinearRgb(Number(oklch[1]) / 100, Number(oklch[2]), Number(oklch[3]));
     return {
-      kind: "oklch",
-      l: Number(oklch[1]) / 100,
-      c: Number(oklch[2]),
-      h: Number(oklch[3]),
+      srgb: linear.map(srgbFromLinear),
+      alpha: oklch[4] === undefined ? 1 : Number(oklch[4]),
     };
   }
 
   const hex = value.match(/^#([0-9a-f]{6})$/i);
   if (hex) {
     const int = parseInt(hex[1], 16);
-    const toLinear = (channel) => {
-      const s = channel / 255;
-      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-    };
     return {
-      kind: "rgb",
-      linear: [
-        toLinear((int >> 16) & 255),
-        toLinear((int >> 8) & 255),
-        toLinear(int & 255),
-      ],
+      srgb: [((int >> 16) & 255) / 255, ((int >> 8) & 255) / 255, (int & 255) / 255],
+      alpha: 1,
     };
   }
 
   throw new Error(`Formato colore non supportato: ${value}`);
 }
 
+function luminanceOfSrgb(srgb) {
+  return relativeLuminance(srgb.map(linearFromSrgb));
+}
+
 function luminance(value) {
-  const color = parseColor(value);
-  const linear =
-    color.kind === "oklch" ? oklchToLinearRgb(color.l, color.c, color.h) : color.linear;
-  return relativeLuminance(linear);
+  return luminanceOfSrgb(parseColor(value).srgb);
 }
 
 function contrast(a, b) {
@@ -104,6 +116,35 @@ function contrast(a, b) {
   const lb = luminance(b);
   const [hi, lo] = la > lb ? [la, lb] : [lb, la];
   return (hi + 0.05) / (lo + 0.05);
+}
+
+function contrastAgainst(fgValue, bgSrgb) {
+  const lf = luminance(fgValue);
+  const lb = luminanceOfSrgb(bgSrgb);
+  const [hi, lo] = lf > lb ? [lf, lb] : [lb, lf];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/* ---------- Compositing (come il browser, in sRGB) ---------- */
+
+/** Dipinge `top` (anche semitrasparente) sopra un fondo già opaco. */
+function paintOver(topValue, bottomSrgb) {
+  const top = parseColor(topValue);
+  return top.srgb.map((channel, index) => channel * top.alpha + bottomSrgb[index] * (1 - top.alpha));
+}
+
+/**
+ * Superficie effettiva dietro il testo su vetro. Dipinge dal basso verso l'alto
+ * nell'ordine reale di `body::before`: gli aloni sono elencati dall'alto
+ * (`--ambient-1`, poi `-3`, poi `-2`), quindi si compongono al contrario.
+ */
+function glassSurface(tokens, variant) {
+  let surface = parseColor(tokens["--paper"]).srgb;
+  for (const token of ["--ambient-2", "--ambient-3", "--ambient-1", variant]) {
+    if (!tokens[token]) continue;
+    surface = paintOver(tokens[token], surface);
+  }
+  return surface;
 }
 
 /* ---------- Coppie da verificare ---------- */
@@ -133,6 +174,13 @@ const PAIRS = [
   ["--loss", "--surface-2", TEXT, "sconfitte su superficie 2"],
 ];
 
+/** Testo che poggia su vetro: si misura sul colore composto. */
+const GLASS_PAIRS = [
+  ["--ink", TEXT, "testo su vetro"],
+  ["--muted", TEXT, "testo secondario su vetro"],
+  ["--accent-text", TEXT, "link/accento su vetro"],
+];
+
 /* ---------- Esecuzione ---------- */
 
 const themes = [
@@ -145,6 +193,7 @@ let checks = 0;
 
 for (const theme of themes) {
   console.log(`\nTema ${theme.name}`);
+
   for (const [fg, bg, minimum, label] of PAIRS) {
     const foreground = theme.tokens[fg];
     const background = theme.tokens[bg];
@@ -161,6 +210,35 @@ for (const theme of themes) {
     console.log(
       `  ${ok ? "ok  " : "FAIL"} ${ratio.toFixed(2).padStart(5)}:1  (min ${minimum})  ${label}`,
     );
+  }
+
+  /* Vetro: il fondo è composto, non un token puro. */
+  for (const variant of ["--glass", "--glass-strong"]) {
+    if (!theme.tokens[variant]) {
+      console.log(`  ?  vetro: token mancante (${variant})`);
+      failures += 1;
+      continue;
+    }
+
+    const surface = glassSurface(theme.tokens, variant);
+    for (const [fg, minimum, label] of GLASS_PAIRS) {
+      const foreground = theme.tokens[fg];
+      if (!foreground) {
+        console.log(`  ?  ${label}: token mancante (${fg})`);
+        failures += 1;
+        continue;
+      }
+
+      const ratio = contrastAgainst(foreground, surface);
+
+      checks += 1;
+      const ok = ratio >= minimum;
+      if (!ok) failures += 1;
+      const where = variant === "--glass" ? "vetro" : "vetro pieno";
+      console.log(
+        `  ${ok ? "ok  " : "FAIL"} ${ratio.toFixed(2).padStart(5)}:1  (min ${minimum})  ${label} [${where}]`,
+      );
+    }
   }
 }
 

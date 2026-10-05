@@ -328,7 +328,7 @@ export function ChatRoom({
           <button
             type="button"
             onClick={scrollToBottom}
-            className="absolute inset-x-0 bottom-3 mx-auto w-fit rounded-full border border-rule bg-surface px-3 py-1.5 text-[12px] font-medium text-ink shadow-pop transition-colors duration-150 hover:bg-surface-2"
+            className="glass-strong glass-pop absolute inset-x-0 bottom-3 mx-auto w-fit rounded-full border border-rule px-3 py-1.5 text-[12px] font-medium text-ink transition-colors duration-150 hover:bg-surface-2"
           >
             Vai ai messaggi recenti
           </button>
