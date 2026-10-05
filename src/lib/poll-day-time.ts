@@ -1,9 +1,9 @@
 import type { PollDetail } from "@/types/domain";
 
 /**
- * Regola "giorno + orario": un giorno si spunta solo se c'è almeno un orario
- * scelto in quel giorno, e non si può togliere l'ultimo orario mentre il giorno
- * resta spuntato.
+ * Regola "giorno + orario": scegliendo un orario il giorno si spunta da solo,
+ * un giorno non si spunta a mano senza almeno un orario in quel giorno, e non
+ * si può togliere l'ultimo orario mentre il giorno resta spuntato.
  *
  * Vive fuori dal componente per essere testabile; il server ricontrolla la
  * stessa regola prima di scrivere (rete di sicurezza).
@@ -30,6 +30,28 @@ export function dayTimeMaps(poll: Pick<PollDetail, "options">): DayTimeMaps {
   }
 
   return { dayToSub, subToDay };
+}
+
+/**
+ * Giorno da spuntare in automatico quando si vota un orario in un
+ * sottosondaggio: `null` se non è un orario, se il voto si sta togliendo o se
+ * il giorno è già votato.
+ */
+export function autoCheckedDayId(input: {
+  poll: Pick<PollDetail, "id" | "options">;
+  myVotes: MyVotes;
+  /** Sondaggio su cui si sta votando: il padre per un giorno, il figlio per un orario. */
+  targetPollId: string;
+  add: boolean;
+}): string | null {
+  const { poll, myVotes, targetPollId, add } = input;
+  if (!add || targetPollId === poll.id) return null;
+
+  const parent = dayTimeMaps(poll).subToDay[targetPollId];
+  if (!parent) return null;
+  if ((myVotes[poll.id] ?? []).includes(parent.dayOptionId)) return null;
+
+  return parent.dayOptionId;
 }
 
 export function dayTimeBlocker(input: {

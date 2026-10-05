@@ -3,7 +3,7 @@
 import { startTransition, useOptimistic, useState } from "react";
 import Link from "next/link";
 import { setVoteAction } from "@/lib/actions/polls";
-import { dayTimeBlocker } from "@/lib/poll-day-time";
+import { autoCheckedDayId, dayTimeBlocker } from "@/lib/poll-day-time";
 import { Avatar } from "@/components/ui/avatar";
 import { FormMessage } from "@/components/ui/form-message";
 import { IconCheck, IconPoll, IconSpinner } from "@/components/icons";
@@ -194,6 +194,17 @@ export function PollResults({
 
     setSavingKeys((keys) => [...keys, key]);
 
+    // Votando un orario il giorno padre si spunta da solo: una sola intenzione
+    // per l'utente, due voti da salvare.
+    const autoDayId = autoCheckedDayId({
+      poll,
+      myVotes: votes,
+      targetPollId: target.id,
+      add,
+    });
+    const autoDayKey = autoDayId ? voteKey(poll.id, autoDayId) : null;
+    if (autoDayKey && !mainTarget.closed) setSavingKeys((keys) => [...keys, autoDayKey]);
+
     startTransition(async () => {
       applyOptimisticVote({
         pollId: target.id,
@@ -201,13 +212,26 @@ export function PollResults({
         add,
         single: !target.allowMultiple,
       });
+      if (autoDayId && !mainTarget.closed) {
+        applyOptimisticVote({
+          pollId: poll.id,
+          optionId: autoDayId,
+          add: true,
+          single: !mainTarget.allowMultiple,
+        });
+      }
+
       const result = await setVoteAction({
         poll_id: target.id,
         option_id: optionId,
         voted: add,
       });
+      if (autoDayId && !mainTarget.closed) {
+        await setVoteAction({ poll_id: poll.id, option_id: autoDayId, voted: true });
+      }
       setState(result ?? null);
       stopSaving(key);
+      if (autoDayKey) stopSaving(autoDayKey);
     });
   }
 
@@ -424,7 +448,7 @@ function SubPollVotes({
 
       <p className="mt-2 text-[11px] text-muted">
         {canVote
-          ? "Scegli almeno un orario: il giorno da solo non basta. Puoi sceglierne più di uno."
+          ? "Scegli almeno un orario: il giorno si spunta da solo. Puoi sceglierne più di uno."
           : "Votazione degli orari chiusa."}
       </p>
     </div>
