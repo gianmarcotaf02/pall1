@@ -249,7 +249,7 @@ async function checkDayTimeChoice(
 /**
  * Scegliendo un orario il giorno padre si spunta da solo. Restituisce il voto
  * sul giorno da aggiungere insieme all'orario, oppure null se non serve (non è
- * un orario, oppure il giorno è già votato).
+ * un orario, il giorno è già votato, o il sondaggio dei giorni è chiuso).
  */
 async function autoDayVote(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
@@ -266,10 +266,11 @@ async function autoDayVote(
 
   const { data: parentOption } = await supabase
     .from("poll_options")
-    .select("poll_id")
+    .select("poll_id, poll:polls(is_closed)")
     .eq("id", poll.parent_option_id)
     .maybeSingle();
   if (!parentOption) return null;
+  if (parentOption.poll?.is_closed) return null;
 
   const { data: dayVote } = await supabase
     .from("poll_votes")
