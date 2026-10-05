@@ -266,7 +266,9 @@ async function autoDayVote(
 
   const { data: parentOption } = await supabase
     .from("poll_options")
-    .select("poll_id, poll:polls(is_closed)")
+    // Il vincolo disambigua: tra poll_options e polls ci sono due relazioni
+    // (opzione → sondaggio e sondaggio → opzione-giorno).
+    .select("poll_id, poll:polls!poll_options_poll_id_fkey(is_closed)")
     .eq("id", poll.parent_option_id)
     .maybeSingle();
   if (!parentOption) return null;
