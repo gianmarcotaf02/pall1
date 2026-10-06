@@ -153,7 +153,7 @@ export function BottomNav({ pendingPolls = 0 }: { pendingPolls?: number }) {
               >
                 <span className="relative">
                   <Icon className="size-[21px]" />
-                  <PendingBadge count={badge} className="absolute -top-1.5 -right-2" />
+                  <PendingBadge count={badge} className="absolute -top-3 -right-2.5" />
                 </span>
                 {label}
                 {badge > 0 ? <span className="sr-only">{pendingPollsLabel(badge)}</span> : null}
