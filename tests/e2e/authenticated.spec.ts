@@ -58,7 +58,10 @@ test.describe("utente autenticato", () => {
 
     for (const label of ["Home", "Programma", "Chat", "Giocatori", "Profilo"]) {
       // Stessa ragione: «Programma» può diventare «Programma: 1 sondaggio…».
-      await page.getByRole("link", { name: new RegExp(`^${label}`) }).first().click();
+      await page
+        .getByRole("link", { name: new RegExp(`^${label}`) })
+        .first()
+        .click();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     }
   });
