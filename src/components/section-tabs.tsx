@@ -29,7 +29,7 @@ export function SectionTabs() {
     <div
       role="tablist"
       aria-label="Partite e sondaggi"
-      className="glass-strong glass-pop relative mb-5 flex rounded-full border border-rule p-1.5 md:max-w-[280px]"
+      className="glass-strong glass-pop sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-30 mb-5 flex rounded-full border border-rule p-1.5 md:top-4 md:max-w-[280px]"
     >
       {/*
        * Cursore: lo strato esterno scivola (transition), quello interno rimbalza
