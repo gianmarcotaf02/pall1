@@ -355,6 +355,27 @@ export function isPollClosed(poll: { is_closed: boolean; closes_at: string | nul
   return poll.closes_at !== null && new Date(poll.closes_at).getTime() <= Date.now();
 }
 
+/**
+ * Quanti sondaggi aspettano il voto di questa persona: alimenta i pallini
+ * nelle barre di navigazione, che stanno nel layout e quindi girano su *ogni*
+ * pagina. La regola è la stessa di `waitingForMe` in /polls (sondaggi padre,
+ * non chiusi, senza un mio voto), così il numero sulla barra e il testo in
+ * pagina non possono divergere; le query però sono due select di sole colonne
+ * corte, non `listPolls` con opzioni, voti e profili al seguito.
+ */
+export async function countPendingPolls(myProfileId: string): Promise<number> {
+  const supabase = await createSupabaseServerClient();
+  const [pollsResult, myVotesResult] = await Promise.all([
+    supabase.from("polls").select("id, is_closed, closes_at").is("parent_option_id", null),
+    supabase.from("poll_votes").select("poll_id").eq("profile_id", myProfileId),
+  ]);
+
+  // I voti sui sottosondaggi orari hanno il poll_id del figlio: non collidono.
+  const voted = new Set((myVotesResult.data ?? []).map((vote) => vote.poll_id));
+  return (pollsResult.data ?? []).filter((poll) => !isPollClosed(poll) && !voted.has(poll.id))
+    .length;
+}
+
 function toPollSummary(
   poll: PollRow,
   data: PollData,
