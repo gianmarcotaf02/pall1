@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { SectionTabs } from "@/components/section-tabs";
 import { PollResults } from "@/components/polls/poll-results";
 import { PollBestSlots } from "@/components/polls/poll-best-slots";
 import { PollActions } from "@/components/polls/poll-actions";
@@ -64,8 +63,6 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
         }
         action={<PollStatus closed={poll.closed} />}
       />
-
-      <SectionTabs active="polls" />
 
       {poll.details ? (
         <p className="mb-5 rounded-card border border-rule bg-surface px-4 py-3 text-[13.5px] text-muted">
