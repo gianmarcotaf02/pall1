@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { SectionTabs } from "@/components/section-tabs";
 import { MatchRow } from "@/components/match/match-row";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/button";
@@ -30,8 +29,6 @@ export default async function MatchesPage() {
           ) : null
         }
       />
-
-      <SectionTabs active="matches" />
 
       <section>
         <SectionTitle>In programma</SectionTitle>

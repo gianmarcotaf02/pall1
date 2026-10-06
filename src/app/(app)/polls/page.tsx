@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { SectionTabs } from "@/components/section-tabs";
 import { PollCard } from "@/components/polls/poll-card";
 import { EmptyState, SectionTitle } from "@/components/ui/empty-state";
 import { buttonClass } from "@/components/ui/button";
@@ -55,8 +54,6 @@ export default async function PollsPage() {
           </Link>
         }
       />
-
-      <SectionTabs active="polls" />
 
       <section>
         <SectionTitle
