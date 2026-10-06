@@ -11,6 +11,7 @@ import {
   IconUser,
   IconUsers,
 } from "@/components/icons";
+import { PendingBadge, pendingPollsLabel } from "@/components/ui/pending-badge";
 
 /*
  * «Programma» è la sezione che contiene il calendario delle partite *e* i
@@ -35,9 +36,11 @@ function isActive(pathname: string, href: string, exact: boolean, also: readonly
 export function RailNav({
   isAdmin,
   isOrganizer = false,
+  pendingPolls = 0,
 }: {
   isAdmin: boolean;
   isOrganizer?: boolean;
+  pendingPolls?: number;
 }) {
   const pathname = usePathname();
 
@@ -45,6 +48,7 @@ export function RailNav({
     <nav className="flex flex-col gap-0.5" aria-label="Navigazione principale">
       {ITEMS.map(({ href, label, Icon, exact, also }) => {
         const active = isActive(pathname, href, exact, also);
+        const badge = href === "/matches" ? pendingPolls : 0;
         return (
           <Link
             key={href}
@@ -57,7 +61,11 @@ export function RailNav({
           >
             <Icon className={["size-[18px]", active ? "text-accent-text" : "text-muted group-hover:text-ink"].join(" ")} />
             {label}
-            {active ? <span className="ml-auto size-1.5 rounded-full bg-accent" aria-hidden /> : null}
+            <span className="ml-auto flex items-center gap-2">
+              <PendingBadge count={badge} />
+              {active ? <span className="size-1.5 rounded-full bg-accent" aria-hidden /> : null}
+            </span>
+            {badge > 0 ? <span className="sr-only">{pendingPollsLabel(badge)}</span> : null}
           </Link>
         );
       })}
@@ -100,7 +108,7 @@ export function RailNav({
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ pendingPolls = 0 }: { pendingPolls?: number }) {
   const pathname = usePathname();
   const index = ITEMS.findIndex(({ href, exact, also }) => isActive(pathname, href, exact, also));
 
@@ -132,6 +140,7 @@ export function BottomNav() {
       <ul className="relative flex items-stretch">
         {ITEMS.map(({ href, label, Icon, exact, also }) => {
           const active = isActive(pathname, href, exact, also);
+          const badge = href === "/matches" ? pendingPolls : 0;
           return (
             <li key={href} className="flex-1">
               <Link
@@ -142,8 +151,12 @@ export function BottomNav() {
                   active ? "text-accent-text" : "text-muted hover:text-ink",
                 ].join(" ")}
               >
-                <Icon className="size-[21px]" />
+                <span className="relative">
+                  <Icon className="size-[21px]" />
+                  <PendingBadge count={badge} className="absolute -top-1.5 -right-2" />
+                </span>
                 {label}
+                {badge > 0 ? <span className="sr-only">{pendingPollsLabel(badge)}</span> : null}
               </Link>
             </li>
           );

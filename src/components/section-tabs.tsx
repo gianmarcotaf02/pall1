@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PendingBadge, pendingPollsLabel } from "@/components/ui/pending-badge";
 
 const ITEMS = [
   { href: "/matches", label: "Partite" },
@@ -16,7 +17,7 @@ const ITEMS = [
  * l'indicatore accent è lo stesso elemento e può scivolare da una voce
  * all'altra invece di rimontare già a destinazione.
  */
-export function SectionTabs() {
+export function SectionTabs({ pendingPolls = 0 }: { pendingPolls?: number }) {
   const pathname = usePathname();
   const index = ITEMS.findIndex(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
@@ -46,6 +47,9 @@ export function SectionTabs() {
 
       {ITEMS.map((item, i) => {
         const selected = i === index;
+        // Sui sondaggi il pallino serve finché non ci sei: una volta dentro, il
+        // conteggio lo dice già il titolo della sezione.
+        const badge = item.href === "/polls" && !selected ? pendingPolls : 0;
         return (
           <Link
             key={item.href}
@@ -53,12 +57,14 @@ export function SectionTabs() {
             role="tab"
             aria-selected={selected}
             className={[
-              "relative flex-1 rounded-full px-3.5 py-2.5 text-center text-[13px] font-medium",
-              "transition-colors duration-150",
+              "relative flex flex-1 items-center justify-center gap-1.5 rounded-full px-3.5 py-2.5",
+              "text-[13px] font-medium transition-colors duration-150",
               selected ? "text-accent-on" : "text-muted hover:text-ink",
             ].join(" ")}
           >
             {item.label}
+            <PendingBadge count={badge} />
+            {badge > 0 ? <span className="sr-only">{pendingPollsLabel(badge)}</span> : null}
           </Link>
         );
       })}

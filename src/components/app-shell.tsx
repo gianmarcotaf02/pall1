@@ -18,9 +18,12 @@ function Wordmark() {
 
 export function AppShell({
   profile,
+  pendingPolls = 0,
   children,
 }: {
   profile: Profile;
+  /** Sondaggi che aspettano il voto di questa persona: pallini nelle barre. */
+  pendingPolls?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -32,7 +35,11 @@ export function AppShell({
           <Wordmark />
         </div>
 
-        <RailNav isAdmin={profile.is_admin} isOrganizer={profile.is_organizer} />
+        <RailNav
+          isAdmin={profile.is_admin}
+          isOrganizer={profile.is_organizer}
+          pendingPolls={pendingPolls}
+        />
 
         <div className="mt-auto space-y-3 border-t border-rule pt-4">
           <Link
@@ -119,12 +126,12 @@ export function AppShell({
            * elemento persistente, quindi passando da una sezione all'altra il
            * suo cursore può scivolare invece di ricomparire già a posto.
            */}
-          <SectionTabs />
+          <SectionTabs pendingPolls={pendingPolls} />
           {children}
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav pendingPolls={pendingPolls} />
     </div>
   );
 }
