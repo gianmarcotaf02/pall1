@@ -3,18 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  IconCalendar,
   IconChat,
   IconHome,
   IconPitch,
-  IconPoll,
   IconShield,
   IconUser,
   IconUsers,
 } from "@/components/icons";
 
+/*
+ * «Programma» è la sezione che contiene il calendario delle partite *e* i
+ * sondaggi con cui si decide quando giocare: da qui l'icona del calendario,
+ * non quella del campo. La sotto-navigazione (barra sotto la topbar) tiene i
+ * nomi delle due pagine.
+ */
 const ITEMS = [
   { href: "/", label: "Home", Icon: IconHome, exact: true, also: [] },
-  { href: "/matches", label: "Partite", Icon: IconPitch, exact: false, also: ["/polls"] },
+  { href: "/matches", label: "Programma", Icon: IconCalendar, exact: false, also: ["/polls"] },
   { href: "/chat", label: "Chat", Icon: IconChat, exact: false, also: [] },
   { href: "/players", label: "Giocatori", Icon: IconUsers, exact: false, also: [] },
   { href: "/profile", label: "Profilo", Icon: IconUser, exact: false, also: [] },
@@ -90,20 +96,6 @@ export function RailNav({
           Organizza
         </Link>
       ) : null}
-
-      <Link
-        href="/polls"
-        aria-current={pathname.startsWith("/polls") ? "page" : undefined}
-        className={[
-          "flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-150",
-          pathname.startsWith("/polls")
-            ? "bg-surface-2 font-medium text-ink"
-            : "text-muted hover:bg-surface-2 hover:text-ink",
-        ].join(" ")}
-      >
-        <IconPoll className="size-[18px]" />
-        Sondaggi
-      </Link>
     </nav>
   );
 }
