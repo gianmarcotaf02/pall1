@@ -1,28 +1,61 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const ITEMS = [
+  { href: "/matches", label: "Partite" },
+  { href: "/polls", label: "Sondaggi" },
+] as const;
 
 /**
- * Tab condivise fra partite e sondaggi: la programmazione è una sola cosa,
- * quindi sta sotto un'unica voce di navigazione.
+ * Sezione condivisa partite/sondaggi: sta in cima al contenuto, subito sotto la
+ * topbar, e usa lo stesso vetro della barra di navigazione in basso.
+ *
+ * Vive nel layout e non nelle pagine: così, passando da /matches a /polls,
+ * l'indicatore accent è lo stesso elemento e può scivolare da una voce
+ * all'altra invece di rimontare già a destinazione.
  */
-export function SectionTabs({ active }: { active: "matches" | "polls" }) {
-  const items = [
-    { key: "matches" as const, href: "/matches", label: "Partite" },
-    { key: "polls" as const, href: "/polls", label: "Sondaggi" },
-  ];
+export function SectionTabs() {
+  const pathname = usePathname();
+  const index = ITEMS.findIndex(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
+
+  // Fuori da partite e sondaggi la barra non serve e non deve rubare spazio.
+  if (index < 0) return null;
 
   return (
-    <div className="glass mb-5 inline-flex rounded-control p-1" role="tablist">
-      {items.map((item) => {
-        const selected = item.key === active;
+    <div
+      role="tablist"
+      aria-label="Partite e sondaggi"
+      className="glass-strong glass-pop relative mb-5 flex rounded-full border border-rule p-1.5 md:max-w-[280px]"
+    >
+      {/*
+       * Cursore: lo strato esterno scivola (transition), quello interno rimbalza
+       * (`.squish-pop`, rimontato con `key` a ogni cambio di voce).
+       */}
+      <span aria-hidden className="pointer-events-none absolute inset-1.5">
+        <span
+          className="absolute inset-y-0 left-0 w-1/2 px-[3px] transition-transform duration-300 ease-out-soft"
+          style={{ transform: `translateX(${index * 100}%)` }}
+        >
+          <span key={index} className="squish-pop block size-full rounded-full bg-accent-solid" />
+        </span>
+      </span>
+
+      {ITEMS.map((item, i) => {
+        const selected = i === index;
         return (
           <Link
-            key={item.key}
+            key={item.href}
             href={item.href}
             role="tab"
             aria-selected={selected}
             className={[
-              "rounded-[7px] px-3.5 py-2 text-[13px] font-medium transition-colors duration-150",
-              selected ? "bg-accent-solid text-accent-on" : "text-muted hover:text-ink",
+              "relative flex-1 rounded-full px-3.5 py-2.5 text-center text-[13px] font-medium",
+              "transition-colors duration-150",
+              selected ? "text-accent-on" : "text-muted hover:text-ink",
             ].join(" ")}
           >
             {item.label}

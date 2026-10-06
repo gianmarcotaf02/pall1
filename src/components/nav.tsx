@@ -110,13 +110,34 @@ export function RailNav({
 
 export function BottomNav() {
   const pathname = usePathname();
+  const index = ITEMS.findIndex(({ href, exact, also }) => isActive(pathname, href, exact, also));
 
   return (
     <nav
       aria-label="Navigazione principale"
       className="glass-strong glass-pop fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-full border border-rule p-1.5 md:hidden"
     >
-      <ul className="flex items-stretch gap-0.5">
+      {/*
+       * Cursore accent sotto la voce attiva. Gli item sono `flex-1` senza gap,
+       * quindi la fetta è esattamente `100 / ITEMS.length` e basta traslare di
+       * una fetta per ogni passo. Lo strato esterno scivola, quello interno
+       * rimbalza (`.squish-pop`, rimontato con `key`).
+       */}
+      <span aria-hidden className="pointer-events-none absolute inset-1.5">
+        {index >= 0 ? (
+          <span
+            className="absolute inset-y-0 left-0 px-[3px] transition-transform duration-300 ease-out-soft"
+            style={{ width: `${100 / ITEMS.length}%`, transform: `translateX(${index * 100}%)` }}
+          >
+            <span
+              key={pathname}
+              className="squish-pop block size-full rounded-full bg-accent/12 dark:bg-accent/22"
+            />
+          </span>
+        ) : null}
+      </span>
+
+      <ul className="relative flex items-stretch">
         {ITEMS.map(({ href, label, Icon, exact, also }) => {
           const active = isActive(pathname, href, exact, also);
           return (
@@ -126,9 +147,7 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className={[
                   "flex h-[52px] flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-medium transition-colors duration-150",
-                  active
-                    ? "bg-accent/12 text-accent-text dark:bg-accent/22"
-                    : "text-muted hover:text-ink",
+                  active ? "text-accent-text" : "text-muted hover:text-ink",
                 ].join(" ")}
               >
                 <Icon className="size-[21px]" />

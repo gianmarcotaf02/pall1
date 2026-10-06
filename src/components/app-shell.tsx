@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BottomNav, RailNav } from "@/components/nav";
+import { SectionTabs } from "@/components/section-tabs";
 import { IconLogout, IconPitch, IconShield } from "@/components/icons";
 import type { Profile } from "@/types/domain";
 
@@ -113,6 +114,12 @@ export function AppShell({
         </header>
 
         <main className="mx-auto w-full max-w-[1040px] flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-[calc(env(safe-area-inset-top)+4.5rem)] md:px-8 md:pb-12 md:pt-8">
+          {/*
+           * Il selettore partite/sondaggi sta qui e non nelle pagine: è un
+           * elemento persistente, quindi passando da una sezione all'altra il
+           * suo cursore può scivolare invece di ricomparire già a posto.
+           */}
+          <SectionTabs />
           {children}
         </main>
       </div>
