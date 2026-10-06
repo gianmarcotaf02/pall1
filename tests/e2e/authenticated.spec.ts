@@ -46,7 +46,9 @@ test.describe("utente autenticato", () => {
 
   test("i sondaggi sono raggiungibili dalla sezione partite", async ({ page }) => {
     await page.goto("/matches");
-    await page.getByRole("tab", { name: "Sondaggi" }).click();
+    // Il tab può portare il pallino dei voti in sospeso, quindi il nome
+    // accessibile è "Sondaggi: N sondaggi in attesa del tuo voto".
+    await page.getByRole("tab", { name: /^Sondaggi/ }).click();
     await expect(page).toHaveURL(/\/polls/);
     await expect(page.getByRole("heading", { level: 1, name: "Sondaggi" })).toBeVisible();
   });
@@ -55,7 +57,8 @@ test.describe("utente autenticato", () => {
     test.skip(!isMobile, "controllo specifico della bottom nav");
 
     for (const label of ["Home", "Programma", "Chat", "Giocatori", "Profilo"]) {
-      await page.getByRole("link", { name: label, exact: true }).first().click();
+      // Stessa ragione: «Programma» può diventare «Programma: 1 sondaggio…».
+      await page.getByRole("link", { name: new RegExp(`^${label}`) }).first().click();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     }
   });
