@@ -51,6 +51,7 @@ export function ChatRoom({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const reconcilingRef = useRef(false);
+  const supabaseRef = useRef<ReturnType<typeof createSupabaseBrowserClient> | null>(null);
 
   const authorById = useMemo(
     () => new Map(authors.map((author) => [author.id, author])),
@@ -61,6 +62,7 @@ export function ChatRoom({
   useEffect(() => {
     let cancelled = false;
     const supabase = createSupabaseBrowserClient();
+    supabaseRef.current = supabase;
     const channel = supabase
       .channel(`chat-messages-${Math.random().toString(36).slice(2)}`)
       .on(
@@ -94,6 +96,7 @@ export function ChatRoom({
 
     return () => {
       cancelled = true;
+      supabaseRef.current = null;
       void supabase.removeChannel(channel);
     };
   }, []);
@@ -109,6 +112,21 @@ export function ChatRoom({
         const recent = await fetchRecentChatMessages();
         if (active && recent.length > 0) {
           setMessages((prev) => mergeMessages(prev, recent));
+        }
+
+        /*
+         * La Server Action qui sopra ha attraversato il proxy, che ha rinnovato
+         * i cookie se il token era scaduto. Il client browser invece non rinnova
+         * da solo (di proposito: vedi src/lib/supabase/client.ts), quindi il
+         * socket va riallineato a mano al token fresco, altrimenti dopo un'ora
+         * di chat aperta resta autenticato con un JWT scaduto.
+         */
+        const supabase = supabaseRef.current;
+        if (supabase) {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session) await supabase.realtime.setAuth(session.access_token);
         }
       } catch {
         // Silenzioso: il realtime resta la via principale.

@@ -104,6 +104,11 @@ export async function resetPasswordAction(_prev: FormState, formData: FormData):
 
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  /*
+   * `local`: esce solo da questo dispositivo. Senza `scope` il default di
+   * auth-js è `global`, che revoca i refresh token di tutte le sessioni
+   * dell'utente: un logout al desktop butterebbe fuori anche la PWA sull'iPhone.
+   */
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/login");
 }

@@ -135,7 +135,14 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 # Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
 # Requires enable_refresh_token_rotation = true.
-refresh_token_reuse_interval = 10
+#
+# Alzato a 60s (default 10): con la rotazione attiva, due richieste che rinnovano
+# la stessa sessione in parallelo (es. il proxy a ogni navigazione e il browser)
+# vengono tollerate se rientrano in questa finestra. Oltre, Supabase le legge come
+# riuso di un refresh token e revoca l'intera famiglia: l'utente viene disconnesso
+# di colpo, senza errori visibili. Su iOS/PWA il ritardo al risveglio dal
+# background supera facilmente i 10s.
+refresh_token_reuse_interval = 60
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
